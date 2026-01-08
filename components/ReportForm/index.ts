@@ -1,0 +1,6 @@
+export { default as BasicInfoTab } from './BasicInfoTab'
+export { default as WinsHighlightsTab } from './WinsHighlightsTab'
+export { default as SalesDataTab } from './SalesDataTab'
+export { default as CompetitionTab } from './CompetitionTab'
+export { default as KeyInitiativesTab } from './KeyInitiativesTab'
+export { default as MarketingEventsTab } from './MarketingEventsTab'

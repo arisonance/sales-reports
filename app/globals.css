@@ -1,26 +1,67 @@
 @import "tailwindcss";
 
 :root {
+  /* Sonance Brand Colors */
+  --sonance-charcoal: #333F48;
+  --sonance-blue: #00A3E1;
+  --sonance-light-grey: #D9D9D6;
+  --sonance-white: #FFFFFF;
+  --sonance-foundation-green: #00B2A9;
+
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #333F48;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-sans: var(--font-montserrat);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Sonance Brand Colors for Tailwind */
+  --color-sonance-charcoal: #333F48;
+  --color-sonance-blue: #00A3E1;
+  --color-sonance-light-grey: #D9D9D6;
+  --color-sonance-green: #00B2A9;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Sonance Typography */
+.sonance-heading {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sonance-subheading {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Sonance Button Style */
+.sonance-btn-primary {
+  background-color: #00A3E1;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+}
+
+.sonance-btn-primary:hover {
+  background-color: #0091c8;
+}
+
+/* Sonance Accent Bar */
+.sonance-accent-bar {
+  height: 4px;
+  background: linear-gradient(90deg, #00A3E1 0%, #333F48 100%);
 }

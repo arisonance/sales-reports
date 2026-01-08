@@ -1,0 +1,53 @@
+{
+  "directors": [
+    {
+      "name": "Eric Huber",
+      "email": "ehuber@sonance.com",
+      "region": "Americas Marketing"
+    },
+    {
+      "name": "Adrián Sepúlveda",
+      "email": "asepulveda@sonance.com",
+      "region": "Mexico"
+    },
+    {
+      "name": "Hayden Shamburger",
+      "email": "hshamburger@sonance.com",
+      "region": "Strategic Accounts"
+    },
+    {
+      "name": "Glenn Kalinowski",
+      "email": "gkalinowski@sonance.com",
+      "region": "Strategic Accounts"
+    },
+    {
+      "name": "James Duvall",
+      "email": "jduvall@sonance.com",
+      "region": "Central"
+    },
+    {
+      "name": "Rick Wallace",
+      "email": "rwallace@sonance.com",
+      "region": "East"
+    },
+    {
+      "name": "Shawn Brechbill",
+      "email": "sbrechbill@sonance.com",
+      "region": "A&D / Consultants"
+    },
+    {
+      "name": "Simon Wehr",
+      "email": "swehr@sonance.com",
+      "region": "Studio / Product"
+    }
+  ],
+  "regions": [
+    "Americas Marketing",
+    "Mexico",
+    "Strategic Accounts",
+    "Central",
+    "East",
+    "A&D / Consultants",
+    "Studio / Product"
+  ]
+}
