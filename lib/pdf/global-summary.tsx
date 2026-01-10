@@ -20,29 +20,20 @@ const IMAGES = {
 
 // Sonance Brand Colors (exact hex values from brand guidelines)
 const COLORS = {
-  charcoal: '#333F48',    // Primary body text
-  blue: '#00A3E1',        // Accent, headers
-  lightGrey: '#D9D9D6',   // Backgrounds
-  white: '#FFFFFF',       // Reverse elements
-  green: '#00B2A9',       // Foundation/success
-  red: '#E53935',         // Danger/negative
+  charcoal: '#333F48',
+  blue: '#00A3E1',
+  lightGrey: '#D9D9D6',
+  white: '#FFFFFF',
+  green: '#00B2A9',
+  red: '#E53935',
+  yellow: '#FFC107',
+  lightBlue: '#E8F7FC',
+  lightGreen: '#E6F7F6',
+  lightRed: '#FDEBEB',
+  veryLightGrey: '#F5F6F7',
 }
 
-// Status colors for OKR tracking
-const STATUS_COLORS = {
-  on_track: '#4CAF50',
-  behind: '#FF9800',
-  in_danger: '#F44336',
-}
-
-// Placeholder OKR data
-const placeholderOKRs = [
-  { objective: 'TBD', update: '', nextSteps: '', status: 'on_track' as const },
-  { objective: 'TBD', update: 'WILL BE UPDATED', nextSteps: 'FOR 2026', status: 'on_track' as const },
-  { objective: 'TBD', update: '', nextSteps: '', status: 'on_track' as const },
-]
-
-// ==================== STYLES - Sonance Brand Excellence ====================
+// ==================== STYLES ====================
 const styles = StyleSheet.create({
   // ==================== COVER PAGE ====================
   coverPage: {
@@ -206,32 +197,48 @@ const styles = StyleSheet.create({
 
   // ==================== SECTION TITLES ====================
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.blue,
     textTransform: 'uppercase',
-    letterSpacing: 3,
+    letterSpacing: 4,
     marginTop: 25,
-    marginBottom: 18,
+    marginBottom: 20,
   },
   sectionTitleWithLine: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 25,
-    marginBottom: 18,
+    marginBottom: 20,
   },
   sectionTitleText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.blue,
     textTransform: 'uppercase',
-    letterSpacing: 3,
+    letterSpacing: 4,
   },
   sectionTitleLine: {
     flex: 1,
     height: 2,
     backgroundColor: COLORS.lightGrey,
     marginLeft: 15,
+  },
+
+  // ==================== HERO CALLOUT ====================
+  heroCallout: {
+    backgroundColor: COLORS.lightBlue,
+    padding: 24,
+    borderRadius: 6,
+    borderLeftWidth: 5,
+    borderLeftColor: COLORS.blue,
+    marginBottom: 25,
+  },
+  heroText: {
+    fontSize: 13,
+    color: COLORS.charcoal,
+    lineHeight: 1.8,
+    fontWeight: 'medium',
   },
 
   // ==================== STATS GRID ====================
@@ -271,6 +278,199 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     opacity: 0.6,
     marginTop: 4,
+  },
+
+  // ==================== PERFORMANCE SUMMARY ====================
+  performanceBox: {
+    backgroundColor: COLORS.veryLightGrey,
+    padding: 20,
+    borderRadius: 6,
+    marginBottom: 25,
+  },
+  performanceText: {
+    fontSize: 11,
+    color: COLORS.charcoal,
+    lineHeight: 1.8,
+  },
+
+  // ==================== WIN CARDS ====================
+  winCardsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 15,
+    marginBottom: 25,
+  },
+  winCard: {
+    width: '47%',
+    backgroundColor: COLORS.white,
+    borderRadius: 6,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.green,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.lightGrey,
+  },
+  winCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  winCardTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: COLORS.charcoal,
+    flex: 1,
+    marginRight: 8,
+  },
+  winCardValue: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: COLORS.green,
+  },
+  winCardDescription: {
+    fontSize: 9,
+    color: COLORS.charcoal,
+    lineHeight: 1.6,
+    opacity: 0.8,
+    marginBottom: 8,
+  },
+  winCardRegion: {
+    fontSize: 8,
+    color: COLORS.blue,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+
+  // ==================== COMPETITOR CARDS ====================
+  competitorCard: {
+    marginBottom: 15,
+    borderRadius: 6,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.lightGrey,
+  },
+  competitorHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  competitorHeaderHigh: {
+    backgroundColor: COLORS.lightRed,
+  },
+  competitorHeaderMedium: {
+    backgroundColor: '#FFF8E1',
+  },
+  competitorHeaderLow: {
+    backgroundColor: COLORS.veryLightGrey,
+  },
+  competitorName: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: COLORS.charcoal,
+  },
+  threatBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 3,
+  },
+  threatBadgeHigh: {
+    backgroundColor: COLORS.red,
+  },
+  threatBadgeMedium: {
+    backgroundColor: COLORS.yellow,
+  },
+  threatBadgeLow: {
+    backgroundColor: COLORS.lightGrey,
+  },
+  threatBadgeText: {
+    fontSize: 7,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  threatBadgeTextLight: {
+    color: COLORS.white,
+  },
+  threatBadgeTextDark: {
+    color: COLORS.charcoal,
+  },
+  competitorBody: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.white,
+    padding: 16,
+  },
+  competitorColumn: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  competitorColumnLabel: {
+    fontSize: 7,
+    color: COLORS.charcoal,
+    opacity: 0.5,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  competitorColumnText: {
+    fontSize: 9,
+    color: COLORS.charcoal,
+    lineHeight: 1.6,
+  },
+
+  // ==================== MARKET TRENDS CALLOUT ====================
+  trendCallout: {
+    backgroundColor: COLORS.veryLightGrey,
+    padding: 20,
+    borderRadius: 6,
+    marginBottom: 25,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.charcoal,
+  },
+  trendText: {
+    fontSize: 11,
+    color: COLORS.charcoal,
+    lineHeight: 1.8,
+    fontStyle: 'italic',
+  },
+
+  // ==================== RECOMMENDATIONS ====================
+  recommendationItem: {
+    flexDirection: 'row',
+    marginBottom: 18,
+    alignItems: 'flex-start',
+  },
+  recommendationNumber: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.blue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  recommendationNumberText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  recommendationContent: {
+    flex: 1,
+    paddingTop: 2,
+  },
+  recommendationTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: COLORS.charcoal,
+    marginBottom: 4,
+  },
+  recommendationDescription: {
+    fontSize: 10,
+    color: COLORS.charcoal,
+    opacity: 0.8,
+    lineHeight: 1.6,
   },
 
   // ==================== TABLES ====================
@@ -313,152 +513,6 @@ const styles = StyleSheet.create({
   tableCellRed: {
     color: COLORS.red,
     fontWeight: 'bold',
-  },
-
-  // ==================== OKR SECTION ====================
-  okrTable: {
-    marginBottom: 20,
-  },
-  okrHeader: {
-    flexDirection: 'row',
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.lightGrey,
-    paddingBottom: 10,
-    marginBottom: 12,
-  },
-  okrHeaderCell: {
-    fontSize: 9,
-    color: COLORS.blue,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  okrRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 14,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-  },
-  okrNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    backgroundColor: STATUS_COLORS.on_track,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  okrNumberText: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  okrCell: {
-    fontSize: 9,
-    color: COLORS.charcoal,
-    flex: 1,
-    lineHeight: 1.5,
-  },
-  statusLegend: {
-    flexDirection: 'row',
-    gap: 25,
-    marginTop: 15,
-    paddingTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.lightGrey,
-  },
-  statusItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusDot: {
-    width: 14,
-    height: 8,
-    borderRadius: 2,
-    marginRight: 8,
-  },
-  statusLabel: {
-    fontSize: 8,
-    color: COLORS.charcoal,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-
-  // ==================== SUMMARY & BULLETS ====================
-  summaryText: {
-    fontSize: 10,
-    lineHeight: 1.7,
-    color: COLORS.charcoal,
-    whiteSpace: 'pre-wrap',
-  },
-  bulletPoint: {
-    flexDirection: 'row',
-    marginBottom: 10,
-  },
-  bulletDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.blue,
-    marginRight: 12,
-    marginTop: 5,
-  },
-  bulletDotDark: {
-    backgroundColor: COLORS.charcoal,
-  },
-  bulletText: {
-    flex: 1,
-    fontSize: 10,
-    lineHeight: 1.6,
-    color: COLORS.charcoal,
-  },
-
-  // ==================== MARKDOWN PARSING ====================
-  mdH1: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.blue,
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    marginTop: 20,
-    marginBottom: 12,
-  },
-  mdH2: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: COLORS.charcoal,
-    marginTop: 16,
-    marginBottom: 10,
-  },
-  mdParagraph: {
-    fontSize: 10,
-    lineHeight: 1.7,
-    color: COLORS.charcoal,
-    marginBottom: 10,
-  },
-  mdBold: {
-    fontWeight: 'bold',
-  },
-  mdBulletItem: {
-    flexDirection: 'row',
-    marginBottom: 8,
-    paddingLeft: 12,
-  },
-  mdBulletDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: COLORS.blue,
-    marginRight: 10,
-    marginTop: 5,
-  },
-  mdBulletText: {
-    flex: 1,
-    fontSize: 10,
-    lineHeight: 1.6,
-    color: COLORS.charcoal,
   },
 
   // ==================== PHOTO HIGHLIGHTS ====================
@@ -580,10 +634,35 @@ interface PhotoData {
   region: string
 }
 
+interface StructuredSummary {
+  overview: string
+  performanceSummary: string
+  topWins: Array<{
+    title: string
+    value: string
+    region: string
+    description: string
+  }>
+  competitorInsights: Array<{
+    competitor: string
+    threat: 'high' | 'medium' | 'low'
+    observation: string
+    response: string
+  }>
+  marketTrends: string
+  initiatives: string
+  recommendations: Array<{
+    priority: number
+    title: string
+    description: string
+  }>
+  photoHighlights?: string
+}
+
 interface GlobalSummaryPDFProps {
   periodType: 'month' | 'quarter'
   periodValue: string
-  summaryText: string
+  structured: StructuredSummary
   photos?: PhotoData[]
   data: {
     totalMonthlySales: number
@@ -624,96 +703,8 @@ const getPercentStyle = (percent: number) => {
   return percent >= 100 ? styles.tableCellGreen : styles.tableCellRed
 }
 
-// Parse inline bold markers (**text**) and return Text components
-const parseInlineMarkdown = (text: string): React.ReactNode[] => {
-  const parts: React.ReactNode[] = []
-  const regex = /\*\*(.+?)\*\*/g
-  let lastIndex = 0
-  let match
-
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push(text.slice(lastIndex, match.index))
-    }
-    parts.push(<Text key={match.index} style={styles.mdBold}>{match[1]}</Text>)
-    lastIndex = match.index + match[0].length
-  }
-
-  if (lastIndex < text.length) {
-    parts.push(text.slice(lastIndex))
-  }
-
-  return parts.length > 0 ? parts : [text]
-}
-
-// Parse full Markdown text and return array of components
-const parseMarkdownToComponents = (markdown: string): React.ReactNode[] => {
-  const components: React.ReactNode[] = []
-  const lines = markdown.split('\n')
-  let bulletItems: string[] = []
-
-  const flushBullets = () => {
-    if (bulletItems.length > 0) {
-      bulletItems.forEach((item, idx) => {
-        components.push(
-          <View key={`bullet-${components.length}-${idx}`} style={styles.mdBulletItem}>
-            <View style={styles.mdBulletDot} />
-            <Text style={styles.mdBulletText}>{parseInlineMarkdown(item)}</Text>
-          </View>
-        )
-      })
-      bulletItems = []
-    }
-  }
-
-  lines.forEach((line, idx) => {
-    const trimmed = line.trim()
-
-    if (!trimmed) {
-      flushBullets()
-      return
-    }
-
-    if (trimmed.startsWith('# ')) {
-      flushBullets()
-      components.push(
-        <Text key={`h1-${idx}`} style={styles.mdH1}>
-          {trimmed.slice(2)}
-        </Text>
-      )
-      return
-    }
-
-    if (trimmed.startsWith('## ')) {
-      flushBullets()
-      components.push(
-        <Text key={`h2-${idx}`} style={styles.mdH2}>
-          {trimmed.slice(3)}
-        </Text>
-      )
-      return
-    }
-
-    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-      bulletItems.push(trimmed.slice(2))
-      return
-    }
-
-    flushBullets()
-    components.push(
-      <Text key={`p-${idx}`} style={styles.mdParagraph}>
-        {parseInlineMarkdown(trimmed)}
-      </Text>
-    )
-  })
-
-  flushBullets()
-  return components
-}
-
 // ==================== COMPONENTS ====================
 
-// Footer Component
 const PageFooter = () => (
   <View style={styles.footerWrapper} fixed>
     <View style={styles.footerLeft}>
@@ -727,15 +718,6 @@ const PageFooter = () => (
   </View>
 )
 
-// Status Indicator Component
-const StatusIndicator = ({ color, label }: { color: string; label: string }) => (
-  <View style={styles.statusItem}>
-    <View style={[styles.statusDot, { backgroundColor: color }]} />
-    <Text style={styles.statusLabel}>{label}</Text>
-  </View>
-)
-
-// Section Title with Line Component
 const SectionTitleWithLine = ({ children }: { children: string }) => (
   <View style={styles.sectionTitleWithLine}>
     <Text style={styles.sectionTitleText}>{children}</Text>
@@ -743,8 +725,76 @@ const SectionTitleWithLine = ({ children }: { children: string }) => (
   </View>
 )
 
+const HeroCallout = ({ text }: { text: string }) => (
+  <View style={styles.heroCallout}>
+    <Text style={styles.heroText}>{text}</Text>
+  </View>
+)
+
+const WinCard = ({ win }: { win: { title: string; value: string; region: string; description: string } }) => (
+  <View style={styles.winCard}>
+    <View style={styles.winCardHeader}>
+      <Text style={styles.winCardTitle}>{win.title}</Text>
+      {win.value && <Text style={styles.winCardValue}>{win.value}</Text>}
+    </View>
+    <Text style={styles.winCardDescription}>{win.description}</Text>
+    <Text style={styles.winCardRegion}>{win.region}</Text>
+  </View>
+)
+
+const CompetitorCard = ({ insight }: { insight: { competitor: string; threat: 'high' | 'medium' | 'low'; observation: string; response: string } }) => {
+  const headerStyle = insight.threat === 'high'
+    ? styles.competitorHeaderHigh
+    : insight.threat === 'medium'
+    ? styles.competitorHeaderMedium
+    : styles.competitorHeaderLow
+
+  const badgeStyle = insight.threat === 'high'
+    ? styles.threatBadgeHigh
+    : insight.threat === 'medium'
+    ? styles.threatBadgeMedium
+    : styles.threatBadgeLow
+
+  const badgeTextStyle = insight.threat === 'low'
+    ? styles.threatBadgeTextDark
+    : styles.threatBadgeTextLight
+
+  return (
+    <View style={styles.competitorCard}>
+      <View style={[styles.competitorHeader, headerStyle]}>
+        <Text style={styles.competitorName}>{insight.competitor}</Text>
+        <View style={[styles.threatBadge, badgeStyle]}>
+          <Text style={[styles.threatBadgeText, badgeTextStyle]}>{insight.threat} threat</Text>
+        </View>
+      </View>
+      <View style={styles.competitorBody}>
+        <View style={styles.competitorColumn}>
+          <Text style={styles.competitorColumnLabel}>What We&apos;re Seeing</Text>
+          <Text style={styles.competitorColumnText}>{insight.observation}</Text>
+        </View>
+        <View style={styles.competitorColumn}>
+          <Text style={styles.competitorColumnLabel}>Our Response</Text>
+          <Text style={styles.competitorColumnText}>{insight.response}</Text>
+        </View>
+      </View>
+    </View>
+  )
+}
+
+const RecommendationItem = ({ rec }: { rec: { priority: number; title: string; description: string } }) => (
+  <View style={styles.recommendationItem}>
+    <View style={styles.recommendationNumber}>
+      <Text style={styles.recommendationNumberText}>{rec.priority}</Text>
+    </View>
+    <View style={styles.recommendationContent}>
+      <Text style={styles.recommendationTitle}>{rec.title}</Text>
+      <Text style={styles.recommendationDescription}>{rec.description}</Text>
+    </View>
+  </View>
+)
+
 // ==================== MAIN PDF COMPONENT ====================
-export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, photos = [], data }: GlobalSummaryPDFProps) => {
+export const GlobalSummaryPDF = ({ periodType, periodValue, structured, photos = [], data }: GlobalSummaryPDFProps) => {
   const overallPercentToGoal = data.totalMonthlyGoal > 0
     ? Math.round((data.totalMonthlySales / data.totalMonthlyGoal) * 100)
     : 0
@@ -850,46 +900,6 @@ export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, photos 
         <PageFooter />
       </Page>
 
-      {/* ==================== OKR UPDATE ==================== */}
-      <Page size="LETTER" style={styles.page}>
-        <View style={styles.header}>
-          <Image src={getImageUrl(IMAGES.logoDark)} style={styles.headerLogo} />
-          <View style={styles.headerRight}>
-            <Text style={styles.headerTitle}>Field Team Report</Text>
-            <Text style={styles.headerDate}>{formatPeriod(periodType, periodValue)}</Text>
-          </View>
-        </View>
-
-        <SectionTitleWithLine>Current OKR Update</SectionTitleWithLine>
-
-        <View style={styles.okrTable}>
-          <View style={styles.okrHeader}>
-            <Text style={[styles.okrHeaderCell, { width: '5%' }]}></Text>
-            <Text style={[styles.okrHeaderCell, { width: '30%' }]}>Objective</Text>
-            <Text style={[styles.okrHeaderCell, { width: '35%' }]}>Update</Text>
-            <Text style={[styles.okrHeaderCell, { width: '30%' }]}>Next Steps</Text>
-          </View>
-          {placeholderOKRs.map((okr, idx) => (
-            <View key={idx} style={styles.okrRow}>
-              <View style={[styles.okrNumber, { backgroundColor: STATUS_COLORS[okr.status] }]}>
-                <Text style={styles.okrNumberText}>{idx + 1}</Text>
-              </View>
-              <Text style={[styles.okrCell, { width: '30%' }]}>{okr.objective}</Text>
-              <Text style={[styles.okrCell, { width: '35%' }]}>{okr.update}</Text>
-              <Text style={[styles.okrCell, { width: '30%' }]}>{okr.nextSteps}</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.statusLegend}>
-          <StatusIndicator color={STATUS_COLORS.on_track} label="On Track" />
-          <StatusIndicator color={STATUS_COLORS.behind} label="Behind" />
-          <StatusIndicator color={STATUS_COLORS.in_danger} label="At Risk" />
-        </View>
-
-        <PageFooter />
-      </Page>
-
       {/* ==================== EXECUTIVE SUMMARY ==================== */}
       <Page size="LETTER" style={styles.page}>
         <View style={styles.header}>
@@ -901,13 +911,32 @@ export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, photos 
         </View>
 
         <SectionTitleWithLine>Executive Summary</SectionTitleWithLine>
-        <View>{parseMarkdownToComponents(summaryText)}</View>
+
+        {/* Hero Overview Callout */}
+        {structured.overview && <HeroCallout text={structured.overview} />}
+
+        {/* Performance Summary */}
+        {structured.performanceSummary && (
+          <View style={styles.performanceBox}>
+            <Text style={styles.performanceText}>{structured.performanceSummary}</Text>
+          </View>
+        )}
+
+        {/* Market Trends */}
+        {structured.marketTrends && (
+          <>
+            <SectionTitleWithLine>Market Trends</SectionTitleWithLine>
+            <View style={styles.trendCallout}>
+              <Text style={styles.trendText}>{structured.marketTrends}</Text>
+            </View>
+          </>
+        )}
 
         <PageFooter />
       </Page>
 
-      {/* ==================== HIGHLIGHTS ==================== */}
-      {(data.topWins.length > 0 || data.competitiveThemes.length > 0) && (
+      {/* ==================== KEY WINS ==================== */}
+      {structured.topWins.length > 0 && (
         <Page size="LETTER" style={styles.page}>
           <View style={styles.header}>
             <Image src={getImageUrl(IMAGES.logoDark)} style={styles.headerLogo} />
@@ -917,29 +946,65 @@ export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, photos 
             </View>
           </View>
 
-          {data.topWins.length > 0 && (
+          <SectionTitleWithLine>Key Wins</SectionTitleWithLine>
+
+          <View style={styles.winCardsGrid}>
+            {structured.topWins.map((win, idx) => (
+              <WinCard key={idx} win={win} />
+            ))}
+          </View>
+
+          {/* Key Initiatives */}
+          {structured.initiatives && (
             <>
-              <SectionTitleWithLine>Top Wins</SectionTitleWithLine>
-              {data.topWins.map((win, idx) => (
-                <View key={idx} style={styles.bulletPoint}>
-                  <View style={styles.bulletDot} />
-                  <Text style={styles.bulletText}>{win}</Text>
-                </View>
-              ))}
+              <SectionTitleWithLine>Key Initiatives</SectionTitleWithLine>
+              <View style={styles.performanceBox}>
+                <Text style={styles.performanceText}>{structured.initiatives}</Text>
+              </View>
             </>
           )}
 
-          {data.competitiveThemes.length > 0 && (
-            <>
-              <SectionTitleWithLine>Competitive Landscape</SectionTitleWithLine>
-              {data.competitiveThemes.map((theme, idx) => (
-                <View key={idx} style={styles.bulletPoint}>
-                  <View style={[styles.bulletDot, styles.bulletDotDark]} />
-                  <Text style={styles.bulletText}>{theme}</Text>
-                </View>
-              ))}
-            </>
-          )}
+          <PageFooter />
+        </Page>
+      )}
+
+      {/* ==================== COMPETITIVE LANDSCAPE ==================== */}
+      {structured.competitorInsights.length > 0 && (
+        <Page size="LETTER" style={styles.page}>
+          <View style={styles.header}>
+            <Image src={getImageUrl(IMAGES.logoDark)} style={styles.headerLogo} />
+            <View style={styles.headerRight}>
+              <Text style={styles.headerTitle}>Field Team Report</Text>
+              <Text style={styles.headerDate}>{formatPeriod(periodType, periodValue)}</Text>
+            </View>
+          </View>
+
+          <SectionTitleWithLine>Competitive Landscape</SectionTitleWithLine>
+
+          {structured.competitorInsights.map((insight, idx) => (
+            <CompetitorCard key={idx} insight={insight} />
+          ))}
+
+          <PageFooter />
+        </Page>
+      )}
+
+      {/* ==================== RECOMMENDATIONS ==================== */}
+      {structured.recommendations.length > 0 && (
+        <Page size="LETTER" style={styles.page}>
+          <View style={styles.header}>
+            <Image src={getImageUrl(IMAGES.logoDark)} style={styles.headerLogo} />
+            <View style={styles.headerRight}>
+              <Text style={styles.headerTitle}>Field Team Report</Text>
+              <Text style={styles.headerDate}>{formatPeriod(periodType, periodValue)}</Text>
+            </View>
+          </View>
+
+          <SectionTitleWithLine>Recommendations</SectionTitleWithLine>
+
+          {structured.recommendations.map((rec, idx) => (
+            <RecommendationItem key={idx} rec={rec} />
+          ))}
 
           <PageFooter />
         </Page>

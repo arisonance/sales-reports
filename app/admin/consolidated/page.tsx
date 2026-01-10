@@ -62,6 +62,31 @@ interface PhotoData {
   region: string
 }
 
+interface StructuredSummary {
+  overview: string
+  performanceSummary: string
+  topWins: Array<{
+    title: string
+    value: string
+    region: string
+    description: string
+  }>
+  competitorInsights: Array<{
+    competitor: string
+    threat: 'high' | 'medium' | 'low'
+    observation: string
+    response: string
+  }>
+  marketTrends: string
+  initiatives: string
+  recommendations: Array<{
+    priority: number
+    title: string
+    description: string
+  }>
+  photoHighlights?: string
+}
+
 export default function ConsolidatedReport() {
   const router = useRouter()
   const [periodType, setPeriodType] = useState<'month' | 'quarter'>('month')
@@ -79,7 +104,7 @@ export default function ConsolidatedReport() {
   const [selectedReports, setSelectedReports] = useState<Set<string>>(new Set())
 
   // AI Summary state
-  const [summaryText, setSummaryText] = useState('')
+  const [structuredSummary, setStructuredSummary] = useState<StructuredSummary | null>(null)
   const [summaryPhotos, setSummaryPhotos] = useState<PhotoData[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -184,10 +209,25 @@ export default function ConsolidatedReport() {
       if (res.ok) {
         const saved: SavedSummary | null = await res.json()
         if (saved) {
-          setSummaryText(saved.summary_text)
+          // Try to parse saved summary as JSON, fall back to legacy format
+          try {
+            const parsed = JSON.parse(saved.summary_text)
+            setStructuredSummary(parsed)
+          } catch {
+            // Legacy format - wrap in structured format
+            setStructuredSummary({
+              overview: '',
+              performanceSummary: saved.summary_text,
+              topWins: [],
+              competitorInsights: [],
+              marketTrends: '',
+              initiatives: '',
+              recommendations: []
+            })
+          }
           setSaveStatus('saved')
         } else {
-          setSummaryText('')
+          setStructuredSummary(null)
           setSaveStatus(null)
         }
       }
@@ -222,7 +262,7 @@ export default function ConsolidatedReport() {
         throw new Error(result.error || 'Failed to generate summary')
       }
 
-      setSummaryText(result.summary)
+      setStructuredSummary(result.structured)
       setSummaryPhotos(result.photos || [])
       setSaveStatus('unsaved')
     } catch (error) {
@@ -234,7 +274,7 @@ export default function ConsolidatedReport() {
   }
 
   const handleSaveSummary = async () => {
-    if (!summaryText.trim()) return
+    if (!structuredSummary) return
 
     setIsSaving(true)
     setSaveStatus('saving')
@@ -246,7 +286,7 @@ export default function ConsolidatedReport() {
         body: JSON.stringify({
           periodType,
           periodValue,
-          summaryText,
+          summaryText: JSON.stringify(structuredSummary),
           reportIds: Array.from(selectedReports)
         })
       })
@@ -261,9 +301,11 @@ export default function ConsolidatedReport() {
     }
   }
 
-  const handleSummaryChange = (value: string) => {
-    setSummaryText(value)
-    setSaveStatus('unsaved')
+  const handleOverviewChange = (value: string) => {
+    if (structuredSummary) {
+      setStructuredSummary({ ...structuredSummary, overview: value })
+      setSaveStatus('unsaved')
+    }
   }
 
   const toggleReportSelection = (reportId: string) => {
@@ -308,7 +350,7 @@ export default function ConsolidatedReport() {
   }
 
   const handleExportPDF = async () => {
-    if (!data || !summaryText.trim()) {
+    if (!data || !structuredSummary) {
       alert('Please generate a summary before exporting to PDF')
       return
     }
@@ -322,7 +364,7 @@ export default function ConsolidatedReport() {
         <GlobalSummaryPDF
           periodType={periodType}
           periodValue={periodValue}
-          summaryText={summaryText}
+          structured={structuredSummary}
           photos={summaryPhotos}
           data={{
             totalMonthlySales: data.totalMonthlySales,
@@ -582,7 +624,7 @@ export default function ConsolidatedReport() {
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
-                        {summaryText ? 'Regenerate Summary' : 'Generate Global Summary'}
+                        {structuredSummary ? 'Regenerate Summary' : 'Generate Global Summary'}
                       </>
                     )}
                   </button>
@@ -595,15 +637,111 @@ export default function ConsolidatedReport() {
                 </div>
               )}
 
-              {summaryText ? (
-                <div className="space-y-4">
-                  <textarea
-                    value={summaryText}
-                    onChange={(e) => handleSummaryChange(e.target.value)}
-                    rows={20}
-                    className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue resize-none font-mono text-sm"
-                  />
-                  <div className="flex justify-end">
+              {structuredSummary ? (
+                <div className="space-y-6">
+                  {/* Overview - Editable */}
+                  <div className="bg-sonance-blue/10 border-l-4 border-sonance-blue p-4 rounded-r-lg">
+                    <label className="text-xs font-semibold text-sonance-blue uppercase tracking-wide mb-2 block">Executive Overview</label>
+                    <textarea
+                      value={structuredSummary.overview}
+                      onChange={(e) => handleOverviewChange(e.target.value)}
+                      rows={3}
+                      className="w-full bg-transparent border-none text-foreground focus:ring-0 resize-none"
+                      placeholder="Enter executive overview..."
+                    />
+                  </div>
+
+                  {/* Performance Summary */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-2">Performance Summary</h3>
+                    <p className="text-foreground opacity-80">{structuredSummary.performanceSummary}</p>
+                  </div>
+
+                  {/* Top Wins */}
+                  {structuredSummary.topWins.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Top Wins ({structuredSummary.topWins.length})</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {structuredSummary.topWins.map((win, idx) => (
+                          <div key={idx} className="border-l-4 border-sonance-green bg-card-bg p-4 rounded-r-lg shadow-sm">
+                            <div className="flex items-start justify-between mb-1">
+                              <span className="font-semibold text-foreground">{win.title}</span>
+                              {win.value && <span className="text-sonance-green font-bold">{win.value}</span>}
+                            </div>
+                            <p className="text-sm text-foreground opacity-70 mb-1">{win.description}</p>
+                            <span className="text-xs text-sonance-blue uppercase tracking-wide">{win.region}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Competitor Insights */}
+                  {structuredSummary.competitorInsights.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Competitive Intelligence</h3>
+                      <div className="space-y-3">
+                        {structuredSummary.competitorInsights.map((insight, idx) => (
+                          <div key={idx} className="bg-muted/30 rounded-lg overflow-hidden">
+                            <div className={`px-4 py-2 flex items-center justify-between ${
+                              insight.threat === 'high' ? 'bg-red-500/20' :
+                              insight.threat === 'medium' ? 'bg-yellow-500/20' : 'bg-muted/50'
+                            }`}>
+                              <span className="font-semibold text-foreground">{insight.competitor}</span>
+                              <span className={`text-xs uppercase font-bold ${
+                                insight.threat === 'high' ? 'text-red-400' :
+                                insight.threat === 'medium' ? 'text-yellow-400' : 'text-foreground/50'
+                              }`}>{insight.threat} threat</span>
+                            </div>
+                            <div className="px-4 py-3 grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-xs text-foreground/50 uppercase tracking-wide mb-1">What We&apos;re Seeing</p>
+                                <p className="text-sm text-foreground">{insight.observation}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-foreground/50 uppercase tracking-wide mb-1">Our Response</p>
+                                <p className="text-sm text-foreground">{insight.response}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Market Trends & Initiatives */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-2">Market Trends</h3>
+                      <p className="text-foreground opacity-80 text-sm">{structuredSummary.marketTrends}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-2">Key Initiatives</h3>
+                      <p className="text-foreground opacity-80 text-sm">{structuredSummary.initiatives}</p>
+                    </div>
+                  </div>
+
+                  {/* Recommendations */}
+                  {structuredSummary.recommendations.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Recommendations</h3>
+                      <div className="space-y-2">
+                        {structuredSummary.recommendations.map((rec, idx) => (
+                          <div key={idx} className="flex items-start gap-3">
+                            <span className="w-6 h-6 bg-sonance-blue text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+                              {rec.priority}
+                            </span>
+                            <div>
+                              <span className="font-semibold text-foreground">{rec.title}</span>
+                              <p className="text-sm text-foreground opacity-70">{rec.description}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end pt-4 border-t border-card-border">
                     <button
                       onClick={handleSaveSummary}
                       disabled={isSaving || saveStatus === 'saved'}

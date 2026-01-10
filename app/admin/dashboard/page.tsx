@@ -205,7 +205,8 @@ export default function AdminDashboard() {
               No reports found for the selected filters.
             </div>
           ) : (
-            <table className="w-full">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px]">
               <thead className="bg-muted/30">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wide">
@@ -274,6 +275,7 @@ export default function AdminDashboard() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

@@ -14,11 +14,11 @@ import CopyFromPreviousModal from '@/components/ReportForm/CopyFromPreviousModal
 import { octoberReports } from '@/lib/test-data/october-reports'
 
 const tabs = [
-  { id: 'basic', label: 'Basic Info' },
-  { id: 'wins', label: 'Highlights & Wins' },
-  { id: 'sales', label: 'Sales Data' },
-  { id: 'competition', label: 'Competition & Industry' },
-  { id: 'marketing', label: 'Photos & Events' },
+  { id: 'basic', label: 'Basic Info', shortLabel: 'Info' },
+  { id: 'wins', label: 'Highlights & Wins', shortLabel: 'Wins' },
+  { id: 'sales', label: 'Sales Data', shortLabel: 'Sales' },
+  { id: 'competition', label: 'Competition & Industry', shortLabel: 'Competition' },
+  { id: 'marketing', label: 'Photos & Events', shortLabel: 'Photos' },
 ]
 
 export interface ReportData {
@@ -571,19 +571,20 @@ export default function ReportPage() {
         )}
 
         {/* Tab Navigation */}
-        <div className="bg-card-bg px-6 pt-4 border-b border-card-border">
-          <div className="flex flex-wrap gap-2">
+        <div className="bg-card-bg px-4 sm:px-6 pt-4 border-b border-card-border">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors uppercase tracking-wide ${
+                className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-colors uppercase tracking-wide whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'bg-sonance-blue text-white'
                     : 'bg-muted/50 text-foreground hover:bg-muted'
                 }`}
               >
-                {tab.label}
+                <span className="sm:hidden">{tab.shortLabel}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
               </button>
             ))}
           </div>

@@ -222,19 +222,20 @@ export default function MarketingEventsTab({ data, updateData }: Props) {
         </div>
 
         {data.photos.length > 0 && (
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {data.photos.map((photo) => (
               <div key={photo.id} className="relative group">
                 <img
                   src={photo.url}
                   alt={photo.filename}
-                  className="w-full h-32 object-cover rounded-lg"
+                  className="w-full h-32 sm:h-28 object-cover rounded-lg"
                 />
                 <button
                   onClick={() => removePhoto(photo.id)}
-                  className="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-sm"
+                  className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shadow-md sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                  aria-label="Remove photo"
                 >
-                  x
+                  ×
                 </button>
                 <p className="text-xs text-foreground opacity-60 mt-1 truncate">{photo.filename}</p>
               </div>

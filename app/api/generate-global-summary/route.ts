@@ -340,16 +340,48 @@ export async function POST(request: NextRequest) {
       type: 'text',
       text: `You are helping Sonance sales leadership create a consolidated summary from multiple regional field reports. Sonance is a premium audio company known for architectural speakers and professional audio solutions.
 
-Based on the following ${reports.length} field reports, create a comprehensive executive summary that:
+Based on the following ${reports.length} field reports, respond with a JSON object containing structured data for a visually designed PDF report.
 
-1. **Overall Performance Summary** - Summarize total sales performance with key aggregate metrics and trends
-2. **Top Wins & Achievements** - Highlight the 3-5 most significant wins across all regions
-3. **Competitive Landscape** - Identify common competitive themes, threats, and opportunities
-4. **Market Trends** - Note significant market observations and industry developments
-5. **Key Initiatives & Challenges** - Summarize important projects and blockers across the team
-6. **Recommendations** - Provide 2-3 actionable insights for leadership${photoInstructions}
+RESPONSE FORMAT (respond ONLY with valid JSON, no markdown code fences):
+{
+  "overview": "A 2-3 sentence executive highlight summarizing the most important takeaway from this period.",
+  "performanceSummary": "A paragraph (3-5 sentences) summarizing overall sales performance, key metrics, and trends.",
+  "topWins": [
+    {
+      "title": "Short title of the win",
+      "value": "Dollar value if applicable (e.g., '$1.2M')",
+      "region": "Region or director name",
+      "description": "1-2 sentence description of why this win matters"
+    }
+  ],
+  "competitorInsights": [
+    {
+      "competitor": "Competitor name",
+      "threat": "high | medium | low",
+      "observation": "What we're seeing from this competitor",
+      "response": "Our strategic response"
+    }
+  ],
+  "marketTrends": "A paragraph (2-4 sentences) summarizing key market observations and industry developments.",
+  "initiatives": "A paragraph (2-3 sentences) summarizing key projects and any significant blockers.",
+  "recommendations": [
+    {
+      "priority": 1,
+      "title": "Short actionable recommendation title",
+      "description": "1-2 sentence explanation of the recommendation"
+    }
+  ]${hasPhotos ? `,
+  "photoHighlights": "A paragraph describing any noteworthy photos and their significance, or empty string if none are notable."` : ''}
+}
 
-Write in a professional, executive-friendly tone suitable for senior leadership. Be specific about numbers, company names, and regional context. Use bullet points for easy scanning. The summary should be comprehensive but concise - aim for about 500-800 words.
+IMPORTANT RULES:
+- Respond ONLY with the JSON object, no additional text or markdown
+- Include 3-5 top wins (most significant across all regions)
+- Include 2-4 competitor insights (focus on meaningful competitive intelligence)
+- Include 2-3 recommendations (prioritized 1, 2, 3)
+- Be specific with numbers, company names, and regional context
+- Write in a professional, executive-friendly tone
+- Keep descriptions concise - this is for visual cards, not paragraphs
 
 Here are the field reports:
 
@@ -390,9 +422,38 @@ ${formattedReports}`
     })
 
     const textContent = message.content.find(block => block.type === 'text')
-    const summary = textContent ? textContent.text : ''
+    const rawResponse = textContent ? textContent.text : '{}'
 
-    // Return summary and photos for PDF rendering
+    // Parse JSON response
+    let structured
+    try {
+      // Clean response - remove any markdown code fences if present
+      let jsonStr = rawResponse.trim()
+      if (jsonStr.startsWith('```json')) {
+        jsonStr = jsonStr.slice(7)
+      } else if (jsonStr.startsWith('```')) {
+        jsonStr = jsonStr.slice(3)
+      }
+      if (jsonStr.endsWith('```')) {
+        jsonStr = jsonStr.slice(0, -3)
+      }
+      structured = JSON.parse(jsonStr.trim())
+    } catch (parseError) {
+      console.error('Failed to parse AI response as JSON:', parseError)
+      // Fallback: return the raw text as a legacy summary
+      structured = {
+        overview: '',
+        performanceSummary: rawResponse,
+        topWins: [],
+        competitorInsights: [],
+        marketTrends: '',
+        initiatives: '',
+        recommendations: [],
+        photoHighlights: ''
+      }
+    }
+
+    // Return structured data and photos for PDF rendering
     const photosForPdf = allPhotos.map(({ directorName, region, photo }) => ({
       id: photo.id,
       url: photo.url,
@@ -402,7 +463,7 @@ ${formattedReports}`
       region
     }))
 
-    return NextResponse.json({ summary, photos: photosForPdf })
+    return NextResponse.json({ structured, photos: photosForPdf })
   } catch (error) {
     console.error('Error generating global summary:', error)
     return NextResponse.json(
