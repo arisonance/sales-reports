@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -13,6 +13,13 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: "Sonance | Regional Sales Director Monthly Report",
   description: "Comprehensive Sales Performance & Market Intelligence - Life is Better with Music",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

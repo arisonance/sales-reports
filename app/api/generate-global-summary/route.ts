@@ -332,60 +332,27 @@ export async function POST(request: NextRequest) {
 
     // Add text prompt first
     const hasPhotos = allPhotos.length > 0
-    const photoInstructions = hasPhotos
-      ? `\n\nI'm also including ${allPhotos.length} photo(s) from the field reports. Review these images and if any are particularly noteworthy (showing significant wins, installations, events, or market presence), mention them in the summary under a "**Photo Highlights**" section. Describe what's shown and why it's significant. Only include photos that add value to the executive summary.`
-      : ''
 
     messageContent.push({
       type: 'text',
-      text: `You are helping Sonance sales leadership create a consolidated summary from multiple regional field reports. Sonance is a premium audio company known for architectural speakers and professional audio solutions.
+      text: `Analyze the following ${reports.length} Sonance field reports and create an executive summary.
 
-Based on the following ${reports.length} field reports, respond with a JSON object containing structured data for a visually designed PDF report.
+FIELD REPORTS:
+${formattedReports}
 
-RESPONSE FORMAT (respond ONLY with valid JSON, no markdown code fences):
-{
-  "overview": "A 2-3 sentence executive highlight summarizing the most important takeaway from this period.",
-  "performanceSummary": "A paragraph (3-5 sentences) summarizing overall sales performance, key metrics, and trends.",
-  "topWins": [
-    {
-      "title": "Short title of the win",
-      "value": "Dollar value if applicable (e.g., '$1.2M')",
-      "region": "Region or director name",
-      "description": "1-2 sentence description of why this win matters"
-    }
-  ],
-  "competitorInsights": [
-    {
-      "competitor": "Competitor name",
-      "threat": "high | medium | low",
-      "observation": "What we're seeing from this competitor",
-      "response": "Our strategic response"
-    }
-  ],
-  "marketTrends": "A paragraph (2-4 sentences) summarizing key market observations and industry developments.",
-  "initiatives": "A paragraph (2-3 sentences) summarizing key projects and any significant blockers.",
-  "recommendations": [
-    {
-      "priority": 1,
-      "title": "Short actionable recommendation title",
-      "description": "1-2 sentence explanation of the recommendation"
-    }
-  ]${hasPhotos ? `,
-  "photoHighlights": "A paragraph describing any noteworthy photos and their significance, or empty string if none are notable."` : ''}
-}
+TASK: Create a structured executive summary with:
+- overview: 2-3 sentence executive highlight
+- performanceSummary: 3-5 sentences on sales performance and metrics
+- topWins: Array of 3-5 significant wins with title, value, region, description
+- competitorInsights: Array of 2-4 competitor insights with competitor, threat (high/medium/low), observation, response
+- marketTrends: 2-4 sentences on market observations
+- initiatives: 2-3 sentences on key projects and blockers
+- recommendations: Array of 2-3 prioritized recommendations with priority (1,2,3), title, description${hasPhotos ? `
+- photoHighlights: Note any significant photos` : ''}
 
-IMPORTANT RULES:
-- Respond ONLY with the JSON object, no additional text or markdown
-- Include 3-5 top wins (most significant across all regions)
-- Include 2-4 competitor insights (focus on meaningful competitive intelligence)
-- Include 2-3 recommendations (prioritized 1, 2, 3)
-- Be specific with numbers, company names, and regional context
-- Write in a professional, executive-friendly tone
-- Keep descriptions concise - this is for visual cards, not paragraphs
+Be specific with numbers and company names. Keep descriptions concise for visual cards.
 
-Here are the field reports:
-
-${formattedReports}`
+OUTPUT: Valid JSON object only, no markdown, no explanation.`
     })
 
     // Add photos as images (limit to 10 to avoid token limits)
@@ -411,18 +378,23 @@ ${formattedReports}`
     }
 
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-5-20251101',
+      model: 'claude-sonnet-4-20250514', // Sonnet for reliable JSON output
       max_tokens: 4096,
       messages: [
         {
           role: 'user',
           content: messageContent
+        },
+        {
+          role: 'assistant',
+          content: '{' // Prefill to force JSON output
         }
       ]
     })
 
     const textContent = message.content.find(block => block.type === 'text')
-    const rawResponse = textContent ? textContent.text : '{}'
+    // Prepend the '{' we used as prefill since the response continues from there
+    const rawResponse = '{' + (textContent ? textContent.text : '}')
 
     // Parse JSON response
     let structured
@@ -440,17 +412,11 @@ ${formattedReports}`
       structured = JSON.parse(jsonStr.trim())
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parseError)
-      // Fallback: return the raw text as a legacy summary
-      structured = {
-        overview: '',
-        performanceSummary: rawResponse,
-        topWins: [],
-        competitorInsights: [],
-        marketTrends: '',
-        initiatives: '',
-        recommendations: [],
-        photoHighlights: ''
-      }
+      console.error('Raw response (first 500 chars):', rawResponse.slice(0, 500))
+      return NextResponse.json(
+        { error: 'AI returned invalid format. Please try again.' },
+        { status: 500 }
+      )
     }
 
     // Return structured data and photos for PDF rendering

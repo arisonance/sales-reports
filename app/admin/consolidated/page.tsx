@@ -638,6 +638,19 @@ export default function ConsolidatedReport() {
               )}
 
               {structuredSummary ? (
+                structuredSummary.topWins.length === 0 && structuredSummary.performanceSummary && structuredSummary.performanceSummary.length > 500 ? (
+                  <div className="bg-red-500/10 border border-red-500/30 p-6 rounded-lg text-center">
+                    <p className="text-red-400 font-semibold mb-2">Summary format error</p>
+                    <p className="text-sm text-foreground/70 mb-4">The AI returned an unexpected format. Please regenerate the summary.</p>
+                    <button
+                      onClick={handleGenerateSummary}
+                      disabled={isGenerating}
+                      className="px-4 py-2 bg-sonance-blue text-white rounded-lg text-sm font-semibold hover:bg-sonance-blue/90"
+                    >
+                      Regenerate Summary
+                    </button>
+                  </div>
+                ) : (
                 <div className="space-y-6">
                   {/* Overview - Editable */}
                   <div className="bg-sonance-blue/10 border-l-4 border-sonance-blue p-4 rounded-r-lg">
@@ -755,6 +768,7 @@ export default function ConsolidatedReport() {
                     </button>
                   </div>
                 </div>
+                )
               ) : (
                 <div className="text-center py-12 text-foreground opacity-50">
                   <p>Select reports above and click &quot;Generate Global Summary&quot; to create an AI-powered executive summary.</p>
