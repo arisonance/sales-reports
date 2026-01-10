@@ -11,24 +11,24 @@ const getImageUrl = (path: string) => {
   return path
 }
 
-// Image paths
+// Image paths - Sonance brand assets
 const IMAGES = {
   logoReverse: '/logos/sonance_logo_reverse.png',
   logoDark: '/logos/sonance_logo_dark.png',
   beamIcon: '/logos/sonance_beam_icon.png',
 }
 
-// Sonance Brand Colors
+// Sonance Brand Colors (exact hex values from brand guidelines)
 const COLORS = {
-  charcoal: '#333F48',
-  blue: '#00A3E1',
-  lightGrey: '#D9D9D6',
-  white: '#FFFFFF',
-  green: '#00B2A9',
-  red: '#E53935',
+  charcoal: '#333F48',    // Primary body text
+  blue: '#00A3E1',        // Accent, headers
+  lightGrey: '#D9D9D6',   // Backgrounds
+  white: '#FFFFFF',       // Reverse elements
+  green: '#00B2A9',       // Foundation/success
+  red: '#E53935',         // Danger/negative
 }
 
-// Status colors for OKR
+// Status colors for OKR tracking
 const STATUS_COLORS = {
   on_track: '#4CAF50',
   behind: '#FF9800',
@@ -42,58 +42,88 @@ const placeholderOKRs = [
   { objective: 'TBD', update: '', nextSteps: '', status: 'on_track' as const },
 ]
 
-// Styles
+// ==================== STYLES - Sonance Brand Excellence ====================
 const styles = StyleSheet.create({
   // ==================== COVER PAGE ====================
   coverPage: {
     backgroundColor: COLORS.charcoal,
-    padding: 50,
+    padding: 0,
     position: 'relative',
   },
+  coverHeader: {
+    backgroundColor: COLORS.blue,
+    height: 8,
+  },
+  coverContent: {
+    padding: 50,
+    paddingTop: 40,
+  },
   coverLogo: {
-    width: 152,
-    height: 24,
+    width: 160,
+    height: 25,
   },
   coverTitleBlock: {
-    marginTop: 120,
+    marginTop: 100,
   },
-  titleLine: {
-    width: 350,
-    height: 2,
+  titleAccentLine: {
+    width: 80,
+    height: 4,
     backgroundColor: COLORS.blue,
-    marginBottom: 25,
+    marginBottom: 20,
   },
   coverTitle: {
-    fontSize: 32,
+    fontSize: 38,
     color: COLORS.white,
     textTransform: 'uppercase',
-    letterSpacing: 3,
+    letterSpacing: 4,
     fontWeight: 'bold',
+    marginBottom: 8,
   },
   coverSubtitle: {
-    fontSize: 18,
+    fontSize: 24,
     color: COLORS.white,
-    marginTop: 8,
+    letterSpacing: 2,
+    opacity: 0.9,
   },
-  coverAccent: {
-    fontSize: 12,
+  coverMeta: {
+    marginTop: 60,
+  },
+  coverMetaLabel: {
+    fontSize: 10,
     color: COLORS.blue,
     textTransform: 'uppercase',
-    letterSpacing: 2,
-    marginTop: 30,
+    letterSpacing: 3,
+    marginBottom: 6,
+  },
+  coverMetaValue: {
+    fontSize: 14,
+    color: COLORS.white,
+    opacity: 0.8,
+  },
+  coverFooter: {
+    position: 'absolute',
+    bottom: 50,
+    left: 50,
+  },
+  coverFooterText: {
+    fontSize: 10,
+    color: COLORS.white,
+    opacity: 0.5,
+    letterSpacing: 1,
   },
   coverBeam: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    width: 180,
-    height: 270,
-    opacity: 0.7,
+    width: 200,
+    height: 300,
+    opacity: 0.6,
   },
 
   // ==================== CONTENT PAGES ====================
   page: {
     padding: 50,
+    paddingTop: 40,
     paddingBottom: 80,
     fontFamily: 'Helvetica',
     fontSize: 10,
@@ -104,19 +134,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 25,
-    paddingBottom: 12,
-    borderBottomWidth: 2,
+    marginBottom: 30,
+    paddingBottom: 15,
+    borderBottomWidth: 3,
     borderBottomColor: COLORS.blue,
   },
   headerLogo: {
-    width: 120,
-    height: 19,
+    width: 110,
+    height: 17,
+  },
+  headerRight: {
+    alignItems: 'flex-end',
+  },
+  headerTitle: {
+    fontSize: 8,
+    color: COLORS.charcoal,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    opacity: 0.5,
   },
   headerDate: {
-    fontSize: 9,
+    fontSize: 10,
     color: COLORS.charcoal,
-    opacity: 0.6,
+    fontWeight: 'bold',
+    marginTop: 2,
   },
 
   // ==================== FOOTER ====================
@@ -126,7 +167,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: COLORS.charcoal,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 50,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -136,16 +177,17 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   footerBrand: {
-    fontSize: 9,
+    fontSize: 8,
     color: COLORS.white,
     fontWeight: 'bold',
-    letterSpacing: 1,
+    letterSpacing: 2,
     textTransform: 'uppercase',
   },
   footerUrl: {
-    fontSize: 8,
+    fontSize: 7,
     color: COLORS.blue,
-    marginTop: 2,
+    marginTop: 3,
+    letterSpacing: 1,
   },
   footerCenter: {
     flex: 1,
@@ -154,37 +196,56 @@ const styles = StyleSheet.create({
   pageNumber: {
     fontSize: 9,
     color: COLORS.white,
-    opacity: 0.7,
+    opacity: 0.6,
   },
   footerBeam: {
-    width: 50,
-    height: 75,
-    opacity: 0.5,
+    width: 40,
+    height: 60,
+    opacity: 0.4,
   },
 
   // ==================== SECTION TITLES ====================
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
     color: COLORS.blue,
     textTransform: 'uppercase',
-    letterSpacing: 2,
-    marginTop: 20,
-    marginBottom: 15,
+    letterSpacing: 3,
+    marginTop: 25,
+    marginBottom: 18,
+  },
+  sectionTitleWithLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 25,
+    marginBottom: 18,
+  },
+  sectionTitleText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.blue,
+    textTransform: 'uppercase',
+    letterSpacing: 3,
+  },
+  sectionTitleLine: {
+    flex: 1,
+    height: 2,
+    backgroundColor: COLORS.lightGrey,
+    marginLeft: 15,
   },
 
   // ==================== STATS GRID ====================
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 25,
+    gap: 12,
+    marginBottom: 30,
   },
   statBox: {
     width: '23%',
     backgroundColor: COLORS.blue,
-    padding: 12,
-    borderRadius: 4,
+    padding: 15,
+    borderRadius: 6,
   },
   statBoxGreen: {
     backgroundColor: COLORS.green,
@@ -196,48 +257,50 @@ const styles = StyleSheet.create({
     fontSize: 7,
     color: COLORS.white,
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    opacity: 0.9,
+    letterSpacing: 1.5,
+    opacity: 0.85,
+    marginBottom: 6,
   },
   statValue: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.white,
-    marginTop: 4,
   },
   statSub: {
     fontSize: 7,
     color: COLORS.white,
-    opacity: 0.7,
-    marginTop: 2,
+    opacity: 0.6,
+    marginTop: 4,
   },
 
   // ==================== TABLES ====================
   table: {
-    marginBottom: 20,
+    marginBottom: 25,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: COLORS.charcoal,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
   },
   tableHeaderCell: {
     color: COLORS.white,
     fontSize: 8,
     fontWeight: 'bold',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGrey,
   },
   tableRowAlt: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
   },
   tableCell: {
     fontSize: 9,
@@ -254,84 +317,93 @@ const styles = StyleSheet.create({
 
   // ==================== OKR SECTION ====================
   okrTable: {
-    marginBottom: 15,
+    marginBottom: 20,
   },
   okrHeader: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
     borderBottomColor: COLORS.lightGrey,
-    paddingBottom: 8,
-    marginBottom: 8,
+    paddingBottom: 10,
+    marginBottom: 12,
   },
   okrHeaderCell: {
     fontSize: 9,
     color: COLORS.blue,
     fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   okrRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
-    paddingBottom: 12,
+    marginBottom: 14,
+    paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
   },
   okrNumber: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
+    width: 28,
+    height: 28,
+    borderRadius: 6,
     backgroundColor: STATUS_COLORS.on_track,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 12,
   },
   okrNumberText: {
     color: COLORS.white,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   okrCell: {
     fontSize: 9,
     color: COLORS.charcoal,
     flex: 1,
+    lineHeight: 1.5,
   },
   statusLegend: {
     flexDirection: 'row',
-    gap: 20,
-    marginTop: 10,
+    gap: 25,
+    marginTop: 15,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.lightGrey,
   },
   statusItem: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   statusDot: {
-    width: 12,
-    height: 6,
-    marginRight: 6,
+    width: 14,
+    height: 8,
+    borderRadius: 2,
+    marginRight: 8,
   },
   statusLabel: {
     fontSize: 8,
     color: COLORS.charcoal,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
 
   // ==================== SUMMARY & BULLETS ====================
   summaryText: {
     fontSize: 10,
-    lineHeight: 1.6,
+    lineHeight: 1.7,
     color: COLORS.charcoal,
     whiteSpace: 'pre-wrap',
   },
   bulletPoint: {
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   bulletDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: COLORS.blue,
-    marginRight: 10,
-    marginTop: 4,
+    marginRight: 12,
+    marginTop: 5,
   },
   bulletDotDark: {
     backgroundColor: COLORS.charcoal,
@@ -339,97 +411,156 @@ const styles = StyleSheet.create({
   bulletText: {
     flex: 1,
     fontSize: 10,
-    lineHeight: 1.5,
+    lineHeight: 1.6,
     color: COLORS.charcoal,
   },
 
   // ==================== MARKDOWN PARSING ====================
   mdH1: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.blue,
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: 16,
-    marginBottom: 8,
+    letterSpacing: 2,
+    marginTop: 20,
+    marginBottom: 12,
   },
   mdH2: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
     color: COLORS.charcoal,
-    marginTop: 12,
-    marginBottom: 6,
+    marginTop: 16,
+    marginBottom: 10,
   },
   mdParagraph: {
     fontSize: 10,
-    lineHeight: 1.6,
+    lineHeight: 1.7,
     color: COLORS.charcoal,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   mdBold: {
     fontWeight: 'bold',
   },
   mdBulletItem: {
     flexDirection: 'row',
-    marginBottom: 6,
-    paddingLeft: 10,
+    marginBottom: 8,
+    paddingLeft: 12,
   },
   mdBulletDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     backgroundColor: COLORS.blue,
-    marginRight: 8,
+    marginRight: 10,
     marginTop: 5,
   },
   mdBulletText: {
     flex: 1,
     fontSize: 10,
-    lineHeight: 1.5,
+    lineHeight: 1.6,
     color: COLORS.charcoal,
+  },
+
+  // ==================== PHOTO HIGHLIGHTS ====================
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 15,
+    marginTop: 15,
+  },
+  photoCard: {
+    width: '47%',
+    marginBottom: 15,
+  },
+  photoImage: {
+    width: '100%',
+    height: 140,
+    objectFit: 'cover',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: COLORS.lightGrey,
+  },
+  photoCaption: {
+    marginTop: 8,
+    paddingLeft: 2,
+  },
+  photoCaptionText: {
+    fontSize: 9,
+    color: COLORS.charcoal,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  photoCaptionMeta: {
+    fontSize: 8,
+    color: COLORS.charcoal,
+    opacity: 0.6,
   },
 
   // ==================== BACK PAGE ====================
   backPage: {
     backgroundColor: COLORS.charcoal,
-    padding: 50,
+    padding: 0,
     position: 'relative',
   },
+  backHeader: {
+    backgroundColor: COLORS.blue,
+    height: 8,
+  },
+  backContent: {
+    padding: 50,
+    paddingTop: 60,
+  },
   backLogo: {
-    width: 180,
-    height: 28,
-    marginBottom: 30,
+    width: 200,
+    height: 32,
+    marginBottom: 40,
+  },
+  backTagline: {
+    fontSize: 20,
+    color: COLORS.white,
+    fontStyle: 'italic',
+    marginBottom: 40,
+    opacity: 0.9,
   },
   backText: {
     fontSize: 10,
     color: COLORS.white,
-    opacity: 0.8,
-    marginBottom: 5,
+    opacity: 0.7,
+    marginBottom: 6,
+    lineHeight: 1.6,
+  },
+  backDivider: {
+    width: 60,
+    height: 2,
+    backgroundColor: COLORS.blue,
+    marginVertical: 25,
   },
   backAddress: {
     fontSize: 9,
     color: COLORS.white,
-    opacity: 0.6,
-    marginTop: 15,
-    letterSpacing: 1,
+    opacity: 0.5,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
+    marginTop: 20,
   },
   backWebsite: {
-    fontSize: 10,
+    fontSize: 12,
     color: COLORS.blue,
-    marginTop: 8,
+    marginTop: 10,
     fontWeight: 'bold',
+    letterSpacing: 1,
   },
   backBeam: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    width: 180,
-    height: 270,
-    opacity: 0.7,
+    width: 200,
+    height: 300,
+    opacity: 0.6,
   },
 })
 
+// ==================== INTERFACES ====================
 interface RegionData {
   region: string
   director: string
@@ -440,10 +571,20 @@ interface RegionData {
   status: string
 }
 
+interface PhotoData {
+  id: string
+  url: string
+  filename: string
+  caption?: string
+  directorName: string
+  region: string
+}
+
 interface GlobalSummaryPDFProps {
   periodType: 'month' | 'quarter'
   periodValue: string
   summaryText: string
+  photos?: PhotoData[]
   data: {
     totalMonthlySales: number
     totalMonthlyGoal: number
@@ -459,6 +600,7 @@ interface GlobalSummaryPDFProps {
   }
 }
 
+// ==================== HELPER FUNCTIONS ====================
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -478,7 +620,6 @@ const formatPeriod = (periodType: string, periodValue: string) => {
   })
 }
 
-// Helper to get percentage cell color
 const getPercentStyle = (percent: number) => {
   return percent >= 100 ? styles.tableCellGreen : styles.tableCellRed
 }
@@ -491,16 +632,13 @@ const parseInlineMarkdown = (text: string): React.ReactNode[] => {
   let match
 
   while ((match = regex.exec(text)) !== null) {
-    // Text before bold
     if (match.index > lastIndex) {
       parts.push(text.slice(lastIndex, match.index))
     }
-    // Bold text
     parts.push(<Text key={match.index} style={styles.mdBold}>{match[1]}</Text>)
     lastIndex = match.index + match[0].length
   }
 
-  // Remaining text
   if (lastIndex < text.length) {
     parts.push(text.slice(lastIndex))
   }
@@ -531,13 +669,11 @@ const parseMarkdownToComponents = (markdown: string): React.ReactNode[] => {
   lines.forEach((line, idx) => {
     const trimmed = line.trim()
 
-    // Skip empty lines
     if (!trimmed) {
       flushBullets()
       return
     }
 
-    // H1: # Header
     if (trimmed.startsWith('# ')) {
       flushBullets()
       components.push(
@@ -548,7 +684,6 @@ const parseMarkdownToComponents = (markdown: string): React.ReactNode[] => {
       return
     }
 
-    // H2: ## Header
     if (trimmed.startsWith('## ')) {
       flushBullets()
       components.push(
@@ -559,13 +694,11 @@ const parseMarkdownToComponents = (markdown: string): React.ReactNode[] => {
       return
     }
 
-    // Bullet: - item or * item
     if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
       bulletItems.push(trimmed.slice(2))
       return
     }
 
-    // Regular paragraph
     flushBullets()
     components.push(
       <Text key={`p-${idx}`} style={styles.mdParagraph}>
@@ -574,18 +707,18 @@ const parseMarkdownToComponents = (markdown: string): React.ReactNode[] => {
     )
   })
 
-  // Flush any remaining bullets
   flushBullets()
-
   return components
 }
+
+// ==================== COMPONENTS ====================
 
 // Footer Component
 const PageFooter = () => (
   <View style={styles.footerWrapper} fixed>
     <View style={styles.footerLeft}>
       <Text style={styles.footerBrand}>Sonance Field Team Report</Text>
-      <Text style={styles.footerUrl}>sonance.com</Text>
+      <Text style={styles.footerUrl}>www.sonance.com</Text>
     </View>
     <View style={styles.footerCenter}>
       <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
@@ -602,28 +735,52 @@ const StatusIndicator = ({ color, label }: { color: string; label: string }) => 
   </View>
 )
 
-export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, data }: GlobalSummaryPDFProps) => {
+// Section Title with Line Component
+const SectionTitleWithLine = ({ children }: { children: string }) => (
+  <View style={styles.sectionTitleWithLine}>
+    <Text style={styles.sectionTitleText}>{children}</Text>
+    <View style={styles.sectionTitleLine} />
+  </View>
+)
+
+// ==================== MAIN PDF COMPONENT ====================
+export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, photos = [], data }: GlobalSummaryPDFProps) => {
   const overallPercentToGoal = data.totalMonthlyGoal > 0
     ? Math.round((data.totalMonthlySales / data.totalMonthlyGoal) * 100)
     : 0
+
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 
   return (
     <Document>
       {/* ==================== COVER PAGE ==================== */}
       <Page size="LETTER" style={styles.coverPage}>
-        <Image src={getImageUrl(IMAGES.logoReverse)} style={styles.coverLogo} />
+        <View style={styles.coverHeader} />
+        <View style={styles.coverContent}>
+          <Image src={getImageUrl(IMAGES.logoReverse)} style={styles.coverLogo} />
 
-        <View style={styles.coverTitleBlock}>
-          <View style={styles.titleLine} />
-          <Text style={styles.coverTitle}>
-            {periodType === 'quarter' ? 'QUARTERLY' : 'MONTHLY'} REPORT
-          </Text>
-          <Text style={styles.coverSubtitle}>
-            {formatPeriod(periodType, periodValue)}
-          </Text>
-          <Text style={styles.coverAccent}>
-            Field Team Executive Summary
-          </Text>
+          <View style={styles.coverTitleBlock}>
+            <View style={styles.titleAccentLine} />
+            <Text style={styles.coverTitle}>
+              {periodType === 'quarter' ? 'QUARTERLY' : 'MONTHLY'}
+            </Text>
+            <Text style={styles.coverSubtitle}>
+              Field Team Report
+            </Text>
+          </View>
+
+          <View style={styles.coverMeta}>
+            <Text style={styles.coverMetaLabel}>Report Period</Text>
+            <Text style={styles.coverMetaValue}>{formatPeriod(periodType, periodValue)}</Text>
+          </View>
+
+          <View style={styles.coverFooter}>
+            <Text style={styles.coverFooterText}>Generated {currentDate}</Text>
+          </View>
         </View>
 
         <Image src={getImageUrl(IMAGES.beamIcon)} style={styles.coverBeam} />
@@ -633,24 +790,27 @@ export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, data }:
       <Page size="LETTER" style={styles.page}>
         <View style={styles.header}>
           <Image src={getImageUrl(IMAGES.logoDark)} style={styles.headerLogo} />
-          <Text style={styles.headerDate}>{formatPeriod(periodType, periodValue)}</Text>
+          <View style={styles.headerRight}>
+            <Text style={styles.headerTitle}>Field Team Report</Text>
+            <Text style={styles.headerDate}>{formatPeriod(periodType, periodValue)}</Text>
+          </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Performance Overview</Text>
+        <SectionTitleWithLine>Performance Overview</SectionTitleWithLine>
 
         <View style={styles.statsGrid}>
           <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Total {periodType === 'quarter' ? 'Quarterly' : 'Monthly'} Sales</Text>
+            <Text style={styles.statLabel}>{periodType === 'quarter' ? 'Quarterly' : 'Monthly'} Sales</Text>
             <Text style={styles.statValue}>{formatCurrency(data.totalMonthlySales)}</Text>
             <Text style={styles.statSub}>Goal: {formatCurrency(data.totalMonthlyGoal)}</Text>
           </View>
           <View style={[styles.statBox, styles.statBoxGreen]}>
             <Text style={styles.statLabel}>% to Goal</Text>
             <Text style={styles.statValue}>{overallPercentToGoal}%</Text>
-            <Text style={styles.statSub}>{overallPercentToGoal >= 100 ? 'On track!' : `${100 - overallPercentToGoal}% behind`}</Text>
+            <Text style={styles.statSub}>{overallPercentToGoal >= 100 ? 'On track' : `${100 - overallPercentToGoal}% behind`}</Text>
           </View>
           <View style={[styles.statBox, styles.statBoxDark]}>
-            <Text style={styles.statLabel}>Total Pipeline</Text>
+            <Text style={styles.statLabel}>Pipeline</Text>
             <Text style={styles.statValue}>{formatCurrency(data.totalPipeline)}</Text>
             <Text style={styles.statSub}>Active opportunities</Text>
           </View>
@@ -661,7 +821,7 @@ export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, data }:
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Regional Performance</Text>
+        <SectionTitleWithLine>Regional Performance</SectionTitleWithLine>
         <View style={styles.table}>
           <View style={styles.tableHeader}>
             <Text style={[styles.tableHeaderCell, { width: '22%' }]}>Region</Text>
@@ -681,7 +841,7 @@ export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, data }:
                 {region.percentToGoal >= 100 ? '+' : ''}{region.percentToGoal}%
               </Text>
               <Text style={[styles.tableCell, { width: '10%', textAlign: 'center' }]}>
-                {region.status === 'submitted' ? 'Done' : 'Draft'}
+                {region.status === 'submitted' ? '✓' : '○'}
               </Text>
             </View>
           ))}
@@ -694,17 +854,20 @@ export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, data }:
       <Page size="LETTER" style={styles.page}>
         <View style={styles.header}>
           <Image src={getImageUrl(IMAGES.logoDark)} style={styles.headerLogo} />
-          <Text style={styles.headerDate}>{formatPeriod(periodType, periodValue)}</Text>
+          <View style={styles.headerRight}>
+            <Text style={styles.headerTitle}>Field Team Report</Text>
+            <Text style={styles.headerDate}>{formatPeriod(periodType, periodValue)}</Text>
+          </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Current OKR Update</Text>
+        <SectionTitleWithLine>Current OKR Update</SectionTitleWithLine>
 
         <View style={styles.okrTable}>
           <View style={styles.okrHeader}>
             <Text style={[styles.okrHeaderCell, { width: '5%' }]}></Text>
             <Text style={[styles.okrHeaderCell, { width: '30%' }]}>Objective</Text>
             <Text style={[styles.okrHeaderCell, { width: '35%' }]}>Update</Text>
-            <Text style={[styles.okrHeaderCell, { width: '30%' }]}>Next Month Steps</Text>
+            <Text style={[styles.okrHeaderCell, { width: '30%' }]}>Next Steps</Text>
           </View>
           {placeholderOKRs.map((okr, idx) => (
             <View key={idx} style={styles.okrRow}>
@@ -719,9 +882,9 @@ export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, data }:
         </View>
 
         <View style={styles.statusLegend}>
-          <StatusIndicator color={STATUS_COLORS.on_track} label="On track" />
+          <StatusIndicator color={STATUS_COLORS.on_track} label="On Track" />
           <StatusIndicator color={STATUS_COLORS.behind} label="Behind" />
-          <StatusIndicator color={STATUS_COLORS.in_danger} label="In Danger" />
+          <StatusIndicator color={STATUS_COLORS.in_danger} label="At Risk" />
         </View>
 
         <PageFooter />
@@ -731,10 +894,13 @@ export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, data }:
       <Page size="LETTER" style={styles.page}>
         <View style={styles.header}>
           <Image src={getImageUrl(IMAGES.logoDark)} style={styles.headerLogo} />
-          <Text style={styles.headerDate}>{formatPeriod(periodType, periodValue)}</Text>
+          <View style={styles.headerRight}>
+            <Text style={styles.headerTitle}>Field Team Report</Text>
+            <Text style={styles.headerDate}>{formatPeriod(periodType, periodValue)}</Text>
+          </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Executive Summary</Text>
+        <SectionTitleWithLine>Executive Summary</SectionTitleWithLine>
         <View>{parseMarkdownToComponents(summaryText)}</View>
 
         <PageFooter />
@@ -745,12 +911,15 @@ export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, data }:
         <Page size="LETTER" style={styles.page}>
           <View style={styles.header}>
             <Image src={getImageUrl(IMAGES.logoDark)} style={styles.headerLogo} />
-            <Text style={styles.headerDate}>{formatPeriod(periodType, periodValue)}</Text>
+            <View style={styles.headerRight}>
+              <Text style={styles.headerTitle}>Field Team Report</Text>
+              <Text style={styles.headerDate}>{formatPeriod(periodType, periodValue)}</Text>
+            </View>
           </View>
 
           {data.topWins.length > 0 && (
             <>
-              <Text style={styles.sectionTitle}>Top Wins</Text>
+              <SectionTitleWithLine>Top Wins</SectionTitleWithLine>
               {data.topWins.map((win, idx) => (
                 <View key={idx} style={styles.bulletPoint}>
                   <View style={styles.bulletDot} />
@@ -762,7 +931,7 @@ export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, data }:
 
           {data.competitiveThemes.length > 0 && (
             <>
-              <Text style={styles.sectionTitle}>Competitive Landscape</Text>
+              <SectionTitleWithLine>Competitive Landscape</SectionTitleWithLine>
               {data.competitiveThemes.map((theme, idx) => (
                 <View key={idx} style={styles.bulletPoint}>
                   <View style={[styles.bulletDot, styles.bulletDotDark]} />
@@ -776,21 +945,94 @@ export const GlobalSummaryPDF = ({ periodType, periodValue, summaryText, data }:
         </Page>
       )}
 
+      {/* ==================== PHOTO HIGHLIGHTS ==================== */}
+      {photos.length > 0 && (
+        <Page size="LETTER" style={styles.page}>
+          <View style={styles.header}>
+            <Image src={getImageUrl(IMAGES.logoDark)} style={styles.headerLogo} />
+            <View style={styles.headerRight}>
+              <Text style={styles.headerTitle}>Field Team Report</Text>
+              <Text style={styles.headerDate}>{formatPeriod(periodType, periodValue)}</Text>
+            </View>
+          </View>
+
+          <SectionTitleWithLine>Photo Highlights</SectionTitleWithLine>
+
+          <View style={styles.photoGrid}>
+            {photos.slice(0, 4).map((photo, idx) => (
+              <View key={idx} style={styles.photoCard}>
+                <Image src={photo.url} style={styles.photoImage} />
+                <View style={styles.photoCaption}>
+                  <Text style={styles.photoCaptionText}>
+                    {photo.caption || photo.filename}
+                  </Text>
+                  <Text style={styles.photoCaptionMeta}>
+                    {photo.directorName} • {photo.region}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <PageFooter />
+        </Page>
+      )}
+
+      {/* Additional photos page if needed */}
+      {photos.length > 4 && (
+        <Page size="LETTER" style={styles.page}>
+          <View style={styles.header}>
+            <Image src={getImageUrl(IMAGES.logoDark)} style={styles.headerLogo} />
+            <View style={styles.headerRight}>
+              <Text style={styles.headerTitle}>Field Team Report</Text>
+              <Text style={styles.headerDate}>{formatPeriod(periodType, periodValue)}</Text>
+            </View>
+          </View>
+
+          <SectionTitleWithLine>Photo Highlights (Continued)</SectionTitleWithLine>
+
+          <View style={styles.photoGrid}>
+            {photos.slice(4, 8).map((photo, idx) => (
+              <View key={idx} style={styles.photoCard}>
+                <Image src={photo.url} style={styles.photoImage} />
+                <View style={styles.photoCaption}>
+                  <Text style={styles.photoCaptionText}>
+                    {photo.caption || photo.filename}
+                  </Text>
+                  <Text style={styles.photoCaptionMeta}>
+                    {photo.directorName} • {photo.region}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <PageFooter />
+        </Page>
+      )}
+
       {/* ==================== BACK PAGE ==================== */}
       <Page size="LETTER" style={styles.backPage}>
-        <Image src={getImageUrl(IMAGES.logoReverse)} style={styles.backLogo} />
+        <View style={styles.backHeader} />
+        <View style={styles.backContent}>
+          <Image src={getImageUrl(IMAGES.logoReverse)} style={styles.backLogo} />
 
-        <Text style={styles.backText}>
-          Information in this document is subject to change.
-        </Text>
-        <Text style={styles.backText}>
-          For the latest from Sonance, please visit our website: sonance.com
-        </Text>
+          <Text style={styles.backTagline}>"Life is Better with Music"</Text>
 
-        <Text style={styles.backAddress}>
-          991 Calle Amanecer | San Clemente, CA 92673 | 949.492.7777
-        </Text>
-        <Text style={styles.backWebsite}>WWW.SONANCE.COM</Text>
+          <View style={styles.backDivider} />
+
+          <Text style={styles.backText}>
+            Information in this document is subject to change.
+          </Text>
+          <Text style={styles.backText}>
+            For the latest from Sonance, please visit our website.
+          </Text>
+
+          <Text style={styles.backAddress}>
+            991 Calle Amanecer • San Clemente, CA 92673 • 949.492.7777
+          </Text>
+          <Text style={styles.backWebsite}>WWW.SONANCE.COM</Text>
+        </View>
 
         <Image src={getImageUrl(IMAGES.beamIcon)} style={styles.backBeam} />
       </Page>

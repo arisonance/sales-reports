@@ -7,6 +7,13 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
+interface Photo {
+  id: string
+  url: string
+  filename: string
+  caption?: string
+}
+
 interface FullReport {
   id: string
   month: string
@@ -44,6 +51,7 @@ interface FullReport {
   } | null
   marketTrends: string
   followUps: string
+  photos: Photo[]
 }
 
 async function fetchFullReport(reportId: string): Promise<FullReport | null> {
@@ -66,7 +74,8 @@ async function fetchFullReport(reportId: string): Promise<FullReport | null> {
     { data: keyInitiatives },
     { data: marketingEvents },
     { data: marketTrends },
-    { data: followUps }
+    { data: followUps },
+    { data: photos }
   ] = await Promise.all([
     supabase.from('wins').select('*').eq('report_id', reportId),
     supabase.from('rep_firms').select('*').eq('report_id', reportId),
@@ -75,7 +84,8 @@ async function fetchFullReport(reportId: string): Promise<FullReport | null> {
     supabase.from('key_initiatives').select('*').eq('report_id', reportId).single(),
     supabase.from('marketing_events').select('*').eq('report_id', reportId).single(),
     supabase.from('market_trends').select('*').eq('report_id', reportId).single(),
-    supabase.from('follow_ups').select('*').eq('report_id', reportId).single()
+    supabase.from('follow_ups').select('*').eq('report_id', reportId).single(),
+    supabase.from('photos').select('*').eq('report_id', reportId)
   ])
 
   return {
@@ -87,7 +97,8 @@ async function fetchFullReport(reportId: string): Promise<FullReport | null> {
     keyInitiatives: keyInitiatives || null,
     marketingEvents: marketingEvents || null,
     marketTrends: marketTrends?.observations || '',
-    followUps: followUps?.content || ''
+    followUps: followUps?.content || '',
+    photos: photos || []
   }
 }
 
@@ -132,6 +143,7 @@ function getTestReport(testId: string): FullReport | null {
     },
     marketTrends: testReport.marketTrends,
     followUps: testReport.followUps,
+    photos: [],
   }
 }
 
@@ -251,6 +263,26 @@ function formatReportsForPrompt(reports: FullReport[], periodType: string, perio
   return sections.join('\n')
 }
 
+// Fetch image as base64
+async function fetchImageAsBase64(url: string): Promise<{ base64: string; mediaType: string } | null> {
+  try {
+    const response = await fetch(url)
+    if (!response.ok) return null
+
+    const arrayBuffer = await response.arrayBuffer()
+    const base64 = Buffer.from(arrayBuffer).toString('base64')
+
+    // Determine media type from URL or content-type
+    const contentType = response.headers.get('content-type') || 'image/jpeg'
+    const mediaType = contentType.split(';')[0].trim()
+
+    return { base64, mediaType }
+  } catch (error) {
+    console.error('Failed to fetch image:', url, error)
+    return null
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { reportIds, periodType, periodValue } = await request.json()
@@ -281,13 +313,32 @@ export async function POST(request: NextRequest) {
 
     const formattedReports = formatReportsForPrompt(reports, periodType, periodValue)
 
-    const message = await anthropic.messages.create({
-      model: 'claude-opus-4-5-20251101',
-      max_tokens: 4096,
-      messages: [
-        {
-          role: 'user',
-          content: `You are helping Sonance sales leadership create a consolidated summary from multiple regional field reports. Sonance is a premium audio company known for architectural speakers and professional audio solutions.
+    // Collect all photos from reports
+    const allPhotos: Array<{ directorName: string; region: string; photo: Photo }> = []
+    for (const report of reports) {
+      if (report.photos && report.photos.length > 0) {
+        for (const photo of report.photos) {
+          allPhotos.push({
+            directorName: report.directors.name,
+            region: report.directors.region,
+            photo
+          })
+        }
+      }
+    }
+
+    // Build message content with images
+    const messageContent: Anthropic.MessageCreateParams['messages'][0]['content'] = []
+
+    // Add text prompt first
+    const hasPhotos = allPhotos.length > 0
+    const photoInstructions = hasPhotos
+      ? `\n\nI'm also including ${allPhotos.length} photo(s) from the field reports. Review these images and if any are particularly noteworthy (showing significant wins, installations, events, or market presence), mention them in the summary under a "**Photo Highlights**" section. Describe what's shown and why it's significant. Only include photos that add value to the executive summary.`
+      : ''
+
+    messageContent.push({
+      type: 'text',
+      text: `You are helping Sonance sales leadership create a consolidated summary from multiple regional field reports. Sonance is a premium audio company known for architectural speakers and professional audio solutions.
 
 Based on the following ${reports.length} field reports, create a comprehensive executive summary that:
 
@@ -296,13 +347,44 @@ Based on the following ${reports.length} field reports, create a comprehensive e
 3. **Competitive Landscape** - Identify common competitive themes, threats, and opportunities
 4. **Market Trends** - Note significant market observations and industry developments
 5. **Key Initiatives & Challenges** - Summarize important projects and blockers across the team
-6. **Recommendations** - Provide 2-3 actionable insights for leadership
+6. **Recommendations** - Provide 2-3 actionable insights for leadership${photoInstructions}
 
 Write in a professional, executive-friendly tone suitable for senior leadership. Be specific about numbers, company names, and regional context. Use bullet points for easy scanning. The summary should be comprehensive but concise - aim for about 500-800 words.
 
 Here are the field reports:
 
 ${formattedReports}`
+    })
+
+    // Add photos as images (limit to 10 to avoid token limits)
+    const photosToInclude = allPhotos.slice(0, 10)
+    for (const { directorName, region, photo } of photosToInclude) {
+      const imageData = await fetchImageAsBase64(photo.url)
+      if (imageData) {
+        // Add label for the image
+        messageContent.push({
+          type: 'text',
+          text: `\n\n[Photo from ${directorName} (${region}): ${photo.filename}]`
+        })
+        // Add the image
+        messageContent.push({
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: imageData.mediaType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+            data: imageData.base64
+          }
+        })
+      }
+    }
+
+    const message = await anthropic.messages.create({
+      model: 'claude-opus-4-5-20251101',
+      max_tokens: 4096,
+      messages: [
+        {
+          role: 'user',
+          content: messageContent
         }
       ]
     })
@@ -310,7 +392,17 @@ ${formattedReports}`
     const textContent = message.content.find(block => block.type === 'text')
     const summary = textContent ? textContent.text : ''
 
-    return NextResponse.json({ summary })
+    // Return summary and photos for PDF rendering
+    const photosForPdf = allPhotos.map(({ directorName, region, photo }) => ({
+      id: photo.id,
+      url: photo.url,
+      filename: photo.filename,
+      caption: photo.caption,
+      directorName,
+      region
+    }))
+
+    return NextResponse.json({ summary, photos: photosForPdf })
   } catch (error) {
     console.error('Error generating global summary:', error)
     return NextResponse.json(

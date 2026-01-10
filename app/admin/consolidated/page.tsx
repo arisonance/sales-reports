@@ -53,6 +53,15 @@ interface SavedSummary {
   edited_at: string | null
 }
 
+interface PhotoData {
+  id: string
+  url: string
+  filename: string
+  caption?: string
+  directorName: string
+  region: string
+}
+
 export default function ConsolidatedReport() {
   const router = useRouter()
   const [periodType, setPeriodType] = useState<'month' | 'quarter'>('month')
@@ -71,6 +80,7 @@ export default function ConsolidatedReport() {
 
   // AI Summary state
   const [summaryText, setSummaryText] = useState('')
+  const [summaryPhotos, setSummaryPhotos] = useState<PhotoData[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'saved' | 'unsaved' | 'saving' | null>(null)
@@ -113,9 +123,9 @@ export default function ConsolidatedReport() {
 
         setData(consolidatedData)
 
-        // Auto-select all submitted reports
+        // Auto-select all reports (including drafts for testing)
         const submittedIds = consolidatedData.regions
-          ?.filter((r: { status: string; reportId: string }) => r.status === 'submitted' && r.reportId)
+          ?.filter((r: { status: string; reportId: string }) => (r.status === 'submitted' || r.status === 'draft') && r.reportId)
           .map((r: { reportId: string }) => r.reportId) || []
         setSelectedReports(new Set(submittedIds))
       } else {
@@ -157,7 +167,7 @@ export default function ConsolidatedReport() {
 
         // Auto-select all submitted reports
         const submittedIds = combinedData.regions
-          .filter(r => r.status === 'submitted' && r.reportId)
+          .filter(r => (r.status === 'submitted' || r.status === 'draft') && r.reportId)
           .map(r => r.reportId)
         setSelectedReports(new Set(submittedIds))
       }
@@ -213,6 +223,7 @@ export default function ConsolidatedReport() {
       }
 
       setSummaryText(result.summary)
+      setSummaryPhotos(result.photos || [])
       setSaveStatus('unsaved')
     } catch (error) {
       console.error('Error generating summary:', error)
@@ -267,7 +278,7 @@ export default function ConsolidatedReport() {
 
   const toggleSelectAll = () => {
     const submittedIds = data?.regions
-      .filter(r => r.status === 'submitted' && r.reportId)
+      .filter(r => (r.status === 'submitted' || r.status === 'draft') && r.reportId)
       .map(r => r.reportId) || []
 
     if (selectedReports.size === submittedIds.length) {
@@ -312,6 +323,7 @@ export default function ConsolidatedReport() {
           periodType={periodType}
           periodValue={periodValue}
           summaryText={summaryText}
+          photos={summaryPhotos}
           data={{
             totalMonthlySales: data.totalMonthlySales,
             totalMonthlyGoal: data.totalMonthlyGoal,
@@ -376,7 +388,7 @@ export default function ConsolidatedReport() {
     : 0
 
   const submittedReportIds = data.regions
-    .filter(r => r.status === 'submitted' && r.reportId)
+    .filter(r => (r.status === 'submitted' || r.status === 'draft') && r.reportId)
     .map(r => r.reportId)
 
   return (
@@ -498,7 +510,7 @@ export default function ConsolidatedReport() {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {data.regions.map((region, idx) => {
-                  const isSubmitted = region.status === 'submitted'
+                  const isSubmitted = region.status === 'submitted' || region.status === 'draft' // Allow drafts for testing
                   const isSelected = Boolean(region.reportId && selectedReports.has(region.reportId))
 
                   return (
