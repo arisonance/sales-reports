@@ -8,16 +8,17 @@ import BasicInfoTab from '@/components/ReportForm/BasicInfoTab'
 import WinsHighlightsTab from '@/components/ReportForm/WinsHighlightsTab'
 import SalesDataTab from '@/components/ReportForm/SalesDataTab'
 import CompetitionTab from '@/components/ReportForm/CompetitionTab'
-import KeyInitiativesTab from '@/components/ReportForm/KeyInitiativesTab'
 import MarketingEventsTab from '@/components/ReportForm/MarketingEventsTab'
+import CopyFromPreviousBanner from '@/components/ReportForm/CopyFromPreviousBanner'
+import CopyFromPreviousModal from '@/components/ReportForm/CopyFromPreviousModal'
+import { octoberReports } from '@/lib/test-data/october-reports'
 
 const tabs = [
   { id: 'basic', label: 'Basic Info' },
-  { id: 'wins', label: 'Wins & Highlights' },
+  { id: 'wins', label: 'Highlights & Wins' },
   { id: 'sales', label: 'Sales Data' },
-  { id: 'competition', label: 'Competition' },
-  { id: 'initiatives', label: 'Key Initiatives' },
-  { id: 'marketing', label: 'Marketing & Events' },
+  { id: 'competition', label: 'Competition & Industry' },
+  { id: 'marketing', label: 'Photos & Events' },
 ]
 
 export interface ReportData {
@@ -59,6 +60,7 @@ export interface ReportData {
     ourResponse: string
   }>
   marketTrends: string
+  industryInfo: string
 
   // Key Initiatives
   keyProjects: string
@@ -92,6 +94,7 @@ const initialReportData: ReportData = {
   repFirms: [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0 }],
   competitors: [{ id: '1', name: '', whatWereSeeing: '', ourResponse: '' }],
   marketTrends: '',
+  industryInfo: '',
   keyProjects: '',
   distributionUpdates: '',
   challengesBlockers: '',
@@ -101,6 +104,15 @@ const initialReportData: ReportData = {
   goodJobs: [{ id: '1', personName: '', reason: '' }],
 }
 
+interface PreviousReportData {
+  exists: boolean
+  month: string
+  displayMonth: string
+  repFirmNames: string[]
+  competitorNames: string[]
+  goodJobsNames: string[]
+}
+
 export default function ReportPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('basic')
@@ -108,6 +120,11 @@ export default function ReportPage() {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved')
   const [loading, setLoading] = useState(true)
   const isInitialLoad = useRef(true)
+
+  // Copy from previous report state
+  const [previousReportData, setPreviousReportData] = useState<PreviousReportData | null>(null)
+  const [showCopyBanner, setShowCopyBanner] = useState(false)
+  const [showCopyModal, setShowCopyModal] = useState(false)
 
   // Load director info and existing report on mount
   useEffect(() => {
@@ -122,15 +139,66 @@ export default function ReportPage() {
 
   const loadReportData = async (directorId: string) => {
     try {
-      // Fetch director info
+      // Check for test data mode FIRST - before hitting the database
+      const isTestMode = localStorage.getItem('sonance_test_data_active') === 'true'
+
+      // Get director info (from API or test data)
+      let director: { id: string; name: string; region: string; email: string } | undefined
+
       const directorsRes = await fetch('/api/directors')
       if (directorsRes.ok) {
         const directors = await directorsRes.json()
-        const director = directors.find((d: { id: string }) => d.id === directorId)
-        if (director) {
-          // Check for existing report for current month
-          const currentMonth = new Date().toISOString().slice(0, 7)
-          const reportRes = await fetch('/api/reports/check', {
+        director = directors.find((d: { id: string }) => d.id === directorId)
+      }
+
+      // If API failed and in test mode, get director from config
+      if (!director && isTestMode) {
+        const { getTestDirectors } = await import('@/lib/test-data/store')
+        const testDirectors = getTestDirectors()
+        director = testDirectors.find((d: { id: string }) => d.id === directorId)
+      }
+
+      if (director) {
+        // If test mode is active, load test data directly (skip database)
+        if (isTestMode) {
+          const testReport = octoberReports.find(r => r.directorName === director!.name)
+          if (testReport) {
+            setReportData({
+              directorId: director.id,
+              directorName: director.name,
+              region: director.region,
+              email: director.email,
+              month: testReport.month,
+              executiveSummary: testReport.executiveSummary,
+              wins: testReport.wins.map((w, i) => ({ id: String(i + 1), ...w })),
+              followUps: testReport.followUps,
+              monthlySales: testReport.monthlySales,
+              monthlyGoal: testReport.monthlyGoal,
+              ytdSales: testReport.ytdSales,
+              ytdGoal: testReport.ytdGoal,
+              openOrders: testReport.openOrders,
+              pipeline: testReport.pipeline,
+              repFirms: [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0 }],
+              competitors: testReport.competitors.map((c, i) => ({ id: String(i + 1), ...c })),
+              marketTrends: testReport.marketTrends,
+              industryInfo: testReport.industryInfo,
+              keyProjects: testReport.keyProjects,
+              distributionUpdates: '',
+              challengesBlockers: '',
+              eventsAttended: testReport.eventsAttended,
+              marketingCampaigns: testReport.marketingCampaigns,
+              photos: [],
+              goodJobs: testReport.goodJobs.map((g, i) => ({ id: String(i + 1), ...g })),
+            })
+            setLoading(false)
+            isInitialLoad.current = false
+            return // Skip database lookup
+          }
+        }
+
+        // Normal flow: Check for existing report for current month
+        const currentMonth = new Date().toISOString().slice(0, 7)
+        const reportRes = await fetch('/api/reports/check', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ directorId, month: currentMonth })
@@ -180,6 +248,7 @@ export default function ReportPage() {
                     }))
                   : [{ id: '1', name: '', whatWereSeeing: '', ourResponse: '' }],
                 marketTrends: existingReport.marketTrends || '',
+                industryInfo: existingReport.industryInfo || '',
                 keyProjects: existingReport.keyInitiatives?.key_projects || '',
                 distributionUpdates: existingReport.keyInitiatives?.distribution_updates || '',
                 challengesBlockers: existingReport.keyInitiatives?.challenges_blockers || '',
@@ -203,6 +272,24 @@ export default function ReportPage() {
                 region: director.region,
                 email: director.email,
               }))
+
+              // Check for previous report to offer copy option
+              try {
+                const prevRes = await fetch('/api/reports/previous', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ directorId, currentMonth })
+                })
+                if (prevRes.ok) {
+                  const prevData = await prevRes.json()
+                  if (prevData.exists) {
+                    setPreviousReportData(prevData)
+                    setShowCopyBanner(true)
+                  }
+                }
+              } catch (err) {
+                console.error('Failed to fetch previous report:', err)
+              }
             }
           } else {
             // API error, use director info only
@@ -215,7 +302,6 @@ export default function ReportPage() {
             }))
           }
         }
-      }
     } catch (error) {
       console.error('Failed to load report data:', error)
     } finally {
@@ -256,6 +342,7 @@ export default function ReportPage() {
           marketingCampaigns: data.marketingCampaigns,
         },
         marketTrends: data.marketTrends,
+        industryInfo: data.industryInfo,
         goodJobs: data.goodJobs,
       }
 
@@ -289,6 +376,52 @@ export default function ReportPage() {
 
   const updateReportData = (updates: Partial<ReportData>) => {
     setReportData(prev => ({ ...prev, ...updates }))
+  }
+
+  const handleCopyFromPrevious = (includeGoodJobs: boolean) => {
+    if (!previousReportData) return
+
+    const updates: Partial<ReportData> = {}
+
+    // Copy rep firms - names only, numbers reset to 0
+    if (previousReportData.repFirmNames.length > 0) {
+      updates.repFirms = previousReportData.repFirmNames.map((name, i) => ({
+        id: `copied-${Date.now()}-${i}`,
+        name,
+        monthlySales: 0,
+        ytdSales: 0,
+        percentToGoal: 0,
+        yoyGrowth: 0,
+      }))
+    }
+
+    // Copy competitors - names only, analysis cleared
+    if (previousReportData.competitorNames.length > 0) {
+      updates.competitors = previousReportData.competitorNames.map((name, i) => ({
+        id: `copied-${Date.now()}-${i}`,
+        name,
+        whatWereSeeing: '',
+        ourResponse: '',
+      }))
+    }
+
+    // Optionally copy good jobs names (reason cleared)
+    if (includeGoodJobs && previousReportData.goodJobsNames.length > 0) {
+      updates.goodJobs = previousReportData.goodJobsNames.map((name, i) => ({
+        id: `copied-${Date.now()}-${i}`,
+        personName: name,
+        reason: '',
+      }))
+    }
+
+    setReportData(prev => ({ ...prev, ...updates }))
+    setShowCopyBanner(false)
+    setShowCopyModal(false)
+  }
+
+  const handleSwitchAccount = () => {
+    localStorage.removeItem('selectedDirectorId')
+    router.push('/')
   }
 
   const handleSubmit = async () => {
@@ -326,6 +459,7 @@ export default function ReportPage() {
           marketingCampaigns: reportData.marketingCampaigns,
         },
         marketTrends: reportData.marketTrends,
+        industryInfo: reportData.industryInfo,
         goodJobs: reportData.goodJobs,
       }
 
@@ -356,8 +490,6 @@ export default function ReportPage() {
         return <SalesDataTab data={reportData} updateData={updateReportData} />
       case 'competition':
         return <CompetitionTab data={reportData} updateData={updateReportData} />
-      case 'initiatives':
-        return <KeyInitiativesTab data={reportData} updateData={updateReportData} />
       case 'marketing':
         return <MarketingEventsTab data={reportData} updateData={updateReportData} />
       default:
@@ -367,45 +499,60 @@ export default function ReportPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#333F48] flex items-center justify-center">
-        <div className="bg-white rounded-lg p-8 text-center">
-          <p className="text-[#333F48]">Loading your report...</p>
+      <div className="min-h-screen bg-page-bg flex items-center justify-center">
+        <div className="bg-card-bg rounded-lg p-8 text-center">
+          <p className="text-foreground">Loading your report...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#333F48] p-4">
+    <div className="min-h-screen bg-page-bg p-4">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-t-2xl overflow-hidden">
+        <div className="bg-card-bg rounded-t-2xl overflow-hidden">
           {/* Sonance Accent Bar */}
-          <div className="h-1 bg-gradient-to-r from-[#00A3E1] to-[#333F48]"></div>
+          <div className="h-1 bg-gradient-to-r from-sonance-blue to-sonance-charcoal"></div>
 
-          <div className="p-6 text-center border-b border-[#D9D9D6]">
-            <img
-              src="/logos/sonance_logo_dark.png"
-              alt="Sonance"
-              className="h-7 mx-auto mb-4"
-            />
-            <h1 className="text-xl font-bold text-[#333F48] uppercase tracking-wide">
-              Field Team Bi-Weekly Report
-            </h1>
-            <p className="text-[#333F48] text-sm opacity-70">
-              Comprehensive Sales Performance & Market Intelligence
-            </p>
+          <div className="p-6 border-b border-card-border">
+            {/* User Info Bar */}
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-card-border/50">
+              <div className="text-sm text-muted-foreground">
+                Signed in as: <span className="font-semibold text-foreground">{reportData.directorName || 'Loading...'}</span>
+              </div>
+              <button
+                onClick={handleSwitchAccount}
+                className="text-sm text-sonance-blue hover:underline uppercase tracking-wide"
+              >
+                Switch Account
+              </button>
+            </div>
+
+            <div className="text-center">
+              <img
+                src="/logos/sonance_logo_dark.png"
+                alt="Sonance"
+                className="h-7 mx-auto mb-4"
+              />
+              <h1 className="text-xl font-bold text-foreground uppercase tracking-wide">
+                Field Team Bi-Weekly Report
+              </h1>
+              <p className="text-foreground text-sm opacity-70">
+                Comprehensive Sales Performance & Market Intelligence
+              </p>
+            </div>
 
             {/* Save Status Indicator */}
-            <div className="mt-2 text-xs">
+            <div className="mt-2 text-xs text-center">
               {saveStatus === 'saved' && (
-                <span className="text-[#00B2A9]">All changes saved to cloud</span>
+                <span className="text-sonance-green">All changes saved to cloud</span>
               )}
               {saveStatus === 'saving' && (
-                <span className="text-[#00A3E1]">Saving...</span>
+                <span className="text-sonance-blue">Saving...</span>
               )}
               {saveStatus === 'unsaved' && (
-                <span className="text-[#333F48] opacity-50">Unsaved changes</span>
+                <span className="text-foreground opacity-50">Unsaved changes</span>
               )}
               {saveStatus === 'error' && (
                 <span className="text-red-600">Error saving - will retry</span>
@@ -414,8 +561,17 @@ export default function ReportPage() {
           </div>
         </div>
 
+        {/* Copy from Previous Banner */}
+        {showCopyBanner && previousReportData && (
+          <CopyFromPreviousBanner
+            previousMonth={previousReportData.displayMonth}
+            onCopy={() => setShowCopyModal(true)}
+            onDismiss={() => setShowCopyBanner(false)}
+          />
+        )}
+
         {/* Tab Navigation */}
-        <div className="bg-white px-6 pt-4 border-b border-[#D9D9D6]">
+        <div className="bg-card-bg px-6 pt-4 border-b border-card-border">
           <div className="flex flex-wrap gap-2">
             {tabs.map((tab) => (
               <button
@@ -423,8 +579,8 @@ export default function ReportPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors uppercase tracking-wide ${
                   activeTab === tab.id
-                    ? 'bg-[#00A3E1] text-white'
-                    : 'bg-[#D9D9D6]/50 text-[#333F48] hover:bg-[#D9D9D6]'
+                    ? 'bg-sonance-blue text-white'
+                    : 'bg-muted/50 text-foreground hover:bg-muted'
                 }`}
               >
                 {tab.label}
@@ -434,20 +590,33 @@ export default function ReportPage() {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-white p-6 min-h-[500px]">
+        <div className="bg-card-bg p-6 min-h-[500px]">
           {renderTabContent()}
         </div>
 
         {/* Submit Button */}
-        <div className="bg-white rounded-b-2xl p-6 border-t border-[#D9D9D6]">
+        <div className="bg-card-bg rounded-b-2xl p-6 border-t border-card-border">
           <button
             onClick={handleSubmit}
-            className="w-full py-4 bg-[#00A3E1] text-white font-semibold rounded-lg hover:bg-[#0091c8] transition-all shadow-lg uppercase tracking-wide"
+            className="w-full py-4 bg-sonance-blue text-white font-semibold rounded-lg hover:bg-[#0091c8] transition-all shadow-lg uppercase tracking-wide"
           >
             Submit Report
           </button>
         </div>
       </div>
+
+      {/* Copy from Previous Modal */}
+      {showCopyModal && previousReportData && (
+        <CopyFromPreviousModal
+          isOpen={showCopyModal}
+          onClose={() => setShowCopyModal(false)}
+          onConfirm={handleCopyFromPrevious}
+          previousMonth={previousReportData.displayMonth}
+          repFirmNames={previousReportData.repFirmNames}
+          competitorNames={previousReportData.competitorNames}
+          goodJobsNames={previousReportData.goodJobsNames}
+        />
+      )}
     </div>
   )
 }

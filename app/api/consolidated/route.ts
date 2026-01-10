@@ -87,6 +87,7 @@ export async function GET(request: Request) {
       const topWin = regionWins.length > 0 ? regionWins[0].title : ''
 
       return {
+        reportId: report.id,
         region: report.directors?.region || 'Unknown',
         director: report.directors?.name || 'Unknown',
         monthlySales,

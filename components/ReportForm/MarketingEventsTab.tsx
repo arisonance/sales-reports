@@ -11,9 +11,10 @@ interface Props {
 export default function MarketingEventsTab({ data, updateData }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
+  // Shared file processing function for both click and drag-drop
+  const processFiles = async (files: FileList | File[]) => {
     if (!files || files.length === 0) return
 
     if (!data.directorId) {
@@ -71,6 +72,52 @@ export default function MarketingEventsTab({ data, updateData }: Props) {
     }
   }
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files) {
+      await processFiles(files)
+    }
+  }
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!uploading) {
+      setIsDragging(true)
+    }
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    // Only set to false if we're leaving the drop zone entirely
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX
+    const y = e.clientY
+    if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+      setIsDragging(false)
+    }
+  }
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    if (uploading) return
+
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      await processFiles(files)
+    }
+  }
+
   const removePhoto = async (id: string) => {
     try {
       // Delete from Supabase
@@ -94,10 +141,10 @@ export default function MarketingEventsTab({ data, updateData }: Props) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-[#333F48] uppercase tracking-wide">Marketing Activities</h2>
+      <h2 className="text-xl font-bold text-foreground uppercase tracking-wide">Marketing Activities</h2>
 
       <div>
-        <label className="block text-sm font-semibold text-[#333F48] mb-1 uppercase tracking-wide">
+        <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
           Events Attended
         </label>
         <textarea
@@ -105,12 +152,12 @@ export default function MarketingEventsTab({ data, updateData }: Props) {
           onChange={(e) => updateData({ eventsAttended: e.target.value })}
           placeholder="List trade shows, customer events, training sessions..."
           rows={5}
-          className="w-full px-4 py-3 border-2 border-[#D9D9D6] rounded-lg bg-white text-[#333F48] focus:ring-2 focus:ring-[#00A3E1] focus:border-[#00A3E1] resize-none"
+          className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue resize-none"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-[#333F48] mb-1 uppercase tracking-wide">
+        <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
           Marketing Campaigns
         </label>
         <textarea
@@ -118,39 +165,49 @@ export default function MarketingEventsTab({ data, updateData }: Props) {
           onChange={(e) => updateData({ marketingCampaigns: e.target.value })}
           placeholder="Marketing initiatives, promotions, campaigns running in your region..."
           rows={5}
-          className="w-full px-4 py-3 border-2 border-[#D9D9D6] rounded-lg bg-white text-[#333F48] focus:ring-2 focus:ring-[#00A3E1] focus:border-[#00A3E1] resize-none"
+          className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue resize-none"
         />
       </div>
 
-      <div className="border-t border-[#D9D9D6] pt-6">
-        <h2 className="text-xl font-bold text-[#333F48] mb-4 uppercase tracking-wide">Photos & Visuals</h2>
+      <div className="border-t border-card-border pt-6">
+        <h2 className="text-xl font-bold text-foreground mb-4 uppercase tracking-wide">Photos & Visuals</h2>
 
         <div>
-          <label className="block text-sm font-semibold text-[#333F48] mb-2 uppercase tracking-wide">
+          <label className="block text-sm font-semibold text-foreground mb-2 uppercase tracking-wide">
             Upload Photos (Events, Projects, Team Photos)
           </label>
 
           <div
             onClick={() => !uploading && fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+            onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 rounded-lg p-8 text-center cursor-pointer transition-all ${
               uploading
-                ? 'border-[#D9D9D6] bg-[#D9D9D6]/30 cursor-not-allowed'
-                : 'border-[#00A3E1] hover:border-[#00A3E1] hover:bg-[#00A3E1]/10'
+                ? 'border-card-border border-dashed bg-muted/30 cursor-not-allowed'
+                : isDragging
+                ? 'border-sonance-blue border-solid bg-[#00A3E1]/20 scale-[1.02]'
+                : 'border-sonance-blue border-dashed hover:border-sonance-blue hover:bg-[#00A3E1]/10'
             }`}
           >
             <div className="text-4xl mb-2">
               {uploading ? (
-                <span className="animate-pulse text-[#333F48]">...</span>
+                <span className="animate-pulse text-foreground">...</span>
+              ) : isDragging ? (
+                <span role="img" aria-label="drop">
+                  ⬇️
+                </span>
               ) : (
                 <span role="img" aria-label="camera">
                   📷
                 </span>
               )}
             </div>
-            <p className="text-[#333F48]">
-              {uploading ? 'Uploading photos...' : 'Click to upload photos'}
+            <p className="text-foreground">
+              {uploading ? 'Uploading photos...' : isDragging ? 'Drop photos here' : 'Drag photos here or click to upload'}
             </p>
-            <p className="text-[#333F48] opacity-60 text-sm mt-1">Accepted: JPG, PNG, GIF, WebP (Max 5MB each)</p>
+            <p className="text-foreground opacity-60 text-sm mt-1">Accepted: JPG, PNG, GIF, WebP (Max 5MB each)</p>
           </div>
 
           <input
@@ -179,7 +236,7 @@ export default function MarketingEventsTab({ data, updateData }: Props) {
                 >
                   x
                 </button>
-                <p className="text-xs text-[#333F48] opacity-60 mt-1 truncate">{photo.filename}</p>
+                <p className="text-xs text-foreground opacity-60 mt-1 truncate">{photo.filename}</p>
               </div>
             ))}
           </div>

@@ -1,0 +1,283 @@
+// Test data extracted from Professional Field Reports 10.20-10.31 PDF
+// This is for testing purposes only - not persisted to database
+
+export interface TestReport {
+  directorName: string
+  region: string
+  month: string // YYYY-MM format
+  executiveSummary: string
+  wins: { title: string; description: string }[]
+  followUps: string
+  monthlySales: number
+  monthlyGoal: number
+  ytdSales: number
+  ytdGoal: number
+  openOrders: number
+  pipeline: number
+  competitors: { name: string; whatWereSeeing: string; ourResponse: string }[]
+  marketTrends: string
+  industryInfo: string
+  keyProjects: string
+  eventsAttended: string
+  marketingCampaigns: string
+  goodJobs: { personName: string; reason: string }[]
+}
+
+export const octoberReports: TestReport[] = [
+  {
+    directorName: 'Adrián Sepúlveda',
+    region: 'LATAM - Mexico',
+    month: '2024-10',
+    executiveSummary: 'Attended INFOCOMM Latin America and met with numerous integrators about Sonance Professional. Conducted meetings with distributors TECSO, INTELIGOS, and AV TOOLS to prepare 2026 strategy and upcoming BLAZE training.',
+    wins: [
+      { title: 'INFOCOMM Latin America', description: 'Met with integrators including Arreglo Lineal, Mind & Sense, Ultra Acoustics, Proacustics, and others to understand their perspective on Sonance Professional.' },
+      { title: 'Distributor Strategy Meetings', description: 'Met with TECSO and INTELIGOS for 2026 strategy planning and forecasts.' },
+      { title: 'AV Tools Training Prep', description: 'Coordinated upcoming BLAZE training for November 18-19.' },
+    ],
+    followUps: 'Follow-up with MUNDO CHARRO theme park for presentation and demonstration of solutions.',
+    monthlySales: 125000,
+    monthlyGoal: 150000,
+    ytdSales: 980000,
+    ytdGoal: 1200000,
+    openOrders: 45000,
+    pipeline: 320000,
+    competitors: [],
+    marketTrends: '',
+    industryInfo: '',
+    keyProjects: 'BLAZE training preparation with AV Tools',
+    eventsAttended: 'INFOCOMM Latin America - first edition',
+    marketingCampaigns: '',
+    goodJobs: [],
+  },
+  {
+    directorName: 'Allison Clifford',
+    region: 'Marketing - Brand',
+    month: '2024-10',
+    executiveSummary: 'Strong progress across key initiatives. Sonance Professional logo approved for ISE26 Hall 7. Completed booth render reviews and secured production units ahead of schedule. San Clemente Design Consultant Event successfully executed October 15th.',
+    wins: [
+      { title: 'ISE 2026 Progress', description: 'V4 booth renders developed, secured pre-production units of High Output and Extreme series for Hall 7.' },
+      { title: 'Design Consultant Event', description: 'Successfully executed October 15th event - 12 of 15 attendees responded to survey, all very positive.' },
+      { title: 'Professional Brand ID', description: 'Working on phased introduction to Sonance Professional sub-brand ahead of ISE.' },
+    ],
+    followUps: 'Finalize ISE26 booth design, complete Professional Series High Output and Extreme HO reviews, CI Series sales channel changes.',
+    monthlySales: 0,
+    monthlyGoal: 0,
+    ytdSales: 0,
+    ytdGoal: 0,
+    openOrders: 0,
+    pipeline: 0,
+    competitors: [],
+    marketTrends: '',
+    industryInfo: '',
+    keyProjects: 'ISE 2026 preparation, Professional High Output and Extreme soft launch, Ci Series communication plan',
+    eventsAttended: 'San Clemente Design Consultant Event October 15th',
+    marketingCampaigns: 'Professional High Output and Extreme soft launch materials, Firmware 1.8.4 launch communications',
+    goodJobs: [
+      { personName: 'Steve Benoit', reason: 'Thank you for tracking down pre-production units of High Output and Extreme loudspeaker units for ISE26.' },
+    ],
+  },
+  {
+    directorName: 'Eric Huber',
+    region: 'Marketing - Professional',
+    month: '2024-10',
+    executiveSummary: 'Jury duty limited activities Oct 20-24. Led Sonance Professional Webinar Series on Sound Reinforcement Solutions. Supported IPMA Mood Affiliate Convention.',
+    wins: [
+      { title: 'Professional Webinar', description: 'Sonance Professional Webinar Series - Sound Reinforcement Solutions on 10/21' },
+      { title: 'IPMA Convention Support', description: 'Supported IPMA Mood Affiliate Convention 2025 with Glenn and Hayden (10/28-10/31)' },
+    ],
+    followUps: 'FY 2026 Marketing Budget and Strategy, Sonance Professional Newsletter #3, Sweetwater Office Hours 11/14',
+    monthlySales: 0,
+    monthlyGoal: 0,
+    ytdSales: 0,
+    ytdGoal: 0,
+    openOrders: 0,
+    pipeline: 0,
+    competitors: [
+      { name: 'LEA', whatWereSeeing: 'Monitoring competitor communications, products, promos', ourResponse: 'Value based content strategy' },
+    ],
+    marketTrends: '',
+    industryInfo: '',
+    keyProjects: '25V white paper, ISE 2026 support, Sonance Studio mezzanine wall, Ingage/Design Gallery Update',
+    eventsAttended: 'IPMA Mood Affiliate Convention 2025',
+    marketingCampaigns: 'Regional Event Branding for Sonance Professional',
+    goodJobs: [],
+  },
+  {
+    directorName: 'Glenn Kalinowski',
+    region: 'National Accounts',
+    month: '2024-10',
+    executiveSummary: 'Major wins across strategic accounts. Mood presented Sonance to Darden decision makers - HQ visit scheduled for January. Orange Theory Fitness test store scheduled with C85T High Output. Sketchers approved FY26 global rollout (2000-3000 speakers). SC Media placed $90K direct China shipment. TMP partnership continues strong at $473K YTD.',
+    wins: [
+      { title: 'Darden Brands Progress', description: 'Meeting went extremely well, Darden Execs requested to visit Sonance HQ in early Jan FY26 for preferred status decision for all brands including Yard House.' },
+      { title: 'Orange Theory Fitness', description: 'Test store scheduled for late Feb with C85T High Output speakers - potential to become preferred vendor starting in Canada then NA.' },
+      { title: 'Sketchers Global Rollout', description: 'Approved FY26 global rollout with Mood and Sonance - 2000-3000 speaker opportunity for Blaze.' },
+      { title: 'SC Media Direct Orders', description: 'First direct China shipment order $90K, 2nd order for $100K expected soon.' },
+      { title: 'TMP Partnership', description: 'Currently at $473K (7 months) with active pipeline. Sonance is one of TMPs top respected manufacturing partners.' },
+      { title: 'Dutch Brothers', description: 'PO finally landing - huge win that will continue to pay off as Dutch expands across NA.' },
+    ],
+    followUps: 'Follow up on Darden, Orange Theory, Sketchers, SBUX, Victoria Secret, Cactus Club. Upgrade Digital Edge to Platinum. Finalize Platinum programs with Spencer Tech and Red Thread.',
+    monthlySales: 892000,
+    monthlyGoal: 750000,
+    ytdSales: 5200000,
+    ytdGoal: 5000000,
+    openOrders: 190000,
+    pipeline: 2500000,
+    competitors: [
+      { name: 'EV (Electro-Voice)', whatWereSeeing: 'Recently named new Sr VP over Integration and Intercom sales, causing considerable disruption within the organization', ourResponse: 'Capitalize on transition period' },
+    ],
+    marketTrends: '',
+    industryInfo: '',
+    keyProjects: 'Mood global pricing setup with Niels, Scotia Bank Arena back of house systems (1000+ speakers, James Custom)',
+    eventsAttended: 'Mood IA national conference in San Diego, Blooming Brands National Conference Tampa',
+    marketingCampaigns: '',
+    goodJobs: [
+      { personName: 'Will, Jenna, Juan', reason: 'Support with getting SCs direct orders processed' },
+      { personName: 'Eric Huber', reason: 'Support of the Mood IPMA meetings - great job!' },
+    ],
+  },
+  {
+    directorName: 'James Duvall',
+    region: 'Central US',
+    month: '2024-10',
+    executiveSummary: 'Short report due to PTO last week of October. Key wins include Five Star AV dropping LEA for Blaze Audio as standard solution. Completed College of the Ozarks Keeter Basketball gym commissioning. American Sound progressing to Platinum 2 category.',
+    wins: [
+      { title: 'Five Star AV Conversion', description: 'New dealer officially dropped LEA and will make Blaze Audio amps standard solution - already placing orders to rip out LEA from old projects.' },
+      { title: 'College of the Ozarks', description: 'Onsite commissioning with Southwest AV - 10x CBL528, 2x BL18s, 4x PZC6008. Photos submitted for case study.' },
+      { title: 'CTI Sales Meeting', description: 'Fantastic product development meeting with CTI sales in Minnesota with Dale Sandburg.' },
+      { title: 'American Sound Progress', description: '$150k+ account, looking to move to Platinum 2 category. Working with Morten on removing DFI and giving 60 day terms.' },
+    ],
+    followUps: 'Locking in Sweetwater visit and sales training with Eric Huber for November 14th. Co-creating Blaze Audio training slide deck.',
+    monthlySales: 245000,
+    monthlyGoal: 280000,
+    ytdSales: 1850000,
+    ytdGoal: 2100000,
+    openOrders: 78000,
+    pipeline: 450000,
+    competitors: [],
+    marketTrends: 'Internal challenge: working with several landing pages for client information',
+    industryInfo: '',
+    keyProjects: 'Fulton Middle School - 6x CBL528 & 2x BL18s for gym, potential full school upgrade',
+    eventsAttended: 'MOOD Texas follow-up training Oct 21',
+    marketingCampaigns: '',
+    goodJobs: [
+      { personName: 'Marco', reason: 'Stellar craft - going to miss working with him' },
+    ],
+  },
+  {
+    directorName: 'Shawn Brechbill',
+    region: 'Northeast - Consultants',
+    month: '2024-10',
+    executiveSummary: 'Successful Gensler NYC Showcase with strong interest in Invisible Series and Small Aperture products. JB&B meeting revealed Sonance in every conference room of new HQ. 35 consulting firms registered on new Design Consultant portal in first 2 weeks.',
+    wins: [
+      { title: 'Gensler NYC Showcase', description: 'Digital Experience lab team was intrigued by IS6T powered by Blaze amp. Multiple discipline overview with Design Gallery. Eran will help establish Sonance overview for LA and Chicago offices.' },
+      { title: 'JB&B Meeting NYC', description: 'New JB&B office has Sonance speakers in every conference room - PS-C83, PS-P63, PS-P83. About 20 PS-P83s in multipurpose area getting high reviews.' },
+      { title: 'Design Consultant Portal', description: '35 consulting firms registered on new portal in first 2 weeks.' },
+      { title: 'Hotels Trades Commission Project', description: 'Multi-story healthcare facility with paging using PS-C61s and Blaze amplifiers, plus massage/therapy rooms with Blaze wall controllers.' },
+    ],
+    followUps: '4b Technology Group wants to send 4 designers to Sonance HQ in December. Denver travels Nov 17-19 with ME Engineers, Salas OBrien, Censeo, AE Design, DL Adams.',
+    monthlySales: 385000,
+    monthlyGoal: 400000,
+    ytdSales: 2750000,
+    ytdGoal: 3000000,
+    openOrders: 125000,
+    pipeline: 890000,
+    competitors: [],
+    marketTrends: '',
+    industryInfo: 'Fulcrum Acoustic introduced Driveflex amplifier line. Extron introduced new PoE Powered Ceiling Speaker System with Dante. Ed Charland retiring from Avant Acoustics after 43 years.',
+    keyProjects: 'RTM Engineering - Ameyalli Resort & Spa, Veneklasen Associates - Renaissance Hotels Phoenix, Teecom slated ceiling corporate, ME Engineers - Barclays Center Brooklyn',
+    eventsAttended: 'Gensler NYC Showcase, JB&B Meeting NYC',
+    marketingCampaigns: '',
+    goodJobs: [],
+  },
+  {
+    directorName: 'Simon Wehr',
+    region: 'West - Las Vegas',
+    month: '2024-10',
+    executiveSummary: 'Stingray event at RodeoFX Venice Beach was huge success - IS8T and Blaze amp filled the room with sound under LED screen. Fixed SA system issue at Wynn Las Vegas cocktail lounge on the spot. Hosted UK consultants tour of Vegas properties including Resorts World, Fontainebleau, Venetian.',
+    wins: [
+      { title: 'Stingray Event Success', description: 'IS8T and Blaze amp under LED screen at RodeoFX Venice Beach - surprising performance got lots of attention. Renaud and team incredibly appreciative.' },
+      { title: 'Wynn Las Vegas Service', description: 'Fixed SA system in new cocktail lounge - repaired module wire and corrected SA68 curve in Crown amps. They were incredibly appreciative of quick resolution.' },
+      { title: 'UK Consultant Visit', description: 'Tour of Resorts World, Fontainebleau, Venetian with UK consultants. Lunch with Coherent Design discussing why they use Sonance. Studio tour and demos.' },
+      { title: 'Resorts World Follow-up', description: 'Richard Perks (Director of AV) wants to look at new products for upcoming Vegas and New York projects.' },
+    ],
+    followUps: 'Update Pro areas at studio, Vegas trip next week, ISE planning with Allison/Paxson/Sergei, Wynn UAE project management',
+    monthlySales: 520000,
+    monthlyGoal: 480000,
+    ytdSales: 3400000,
+    ytdGoal: 3200000,
+    openOrders: 165000,
+    pipeline: 1200000,
+    competitors: [],
+    marketTrends: '',
+    industryInfo: '',
+    keyProjects: 'Wynn Dubai support with Coherent Design, Pro room redesign and mezzanine, Cruise ship opportunity',
+    eventsAttended: 'Stingray client cocktail party at RodeoFX Venice Beach',
+    marketingCampaigns: 'Pro story planning, Design Gallery updates with new products',
+    goodJobs: [
+      { personName: 'Rene', reason: 'Hosting the UK consultants' },
+    ],
+  },
+  {
+    directorName: 'Paxson Laird',
+    region: 'Technical - Applications',
+    month: '2024-10',
+    executiveSummary: 'Working with VAI on first building installation commissioning. Finalized Rep Demo kit distribution. Orange Theory Fitness swap to PS-C85RT progressing with Mood Media. BIMObjects finalized Revit files for High Output and Extreme products.',
+    wins: [
+      { title: 'Rep Demo Kits', description: 'Finalized distribution of assets for Rep Demo kits with Eric Huber.' },
+      { title: 'BIM Objects Complete', description: 'Revit files finalized for new High Output and Extreme products.' },
+      { title: 'WJHW Spec Flip', description: 'David from WJHW reached out for spec flip from JBL - relationship sparked from rep roadshow 6 months ago.' },
+      { title: 'CRI Country Club', description: 'Started with in-wall speakers, progressed into much larger solution after project qualification.' },
+    ],
+    followUps: 'Services Summit prep, DigiValet showroom inventory issues, BodyRok high output pendant case study, PowerZone Connect Beta firmware testing',
+    monthlySales: 0,
+    monthlyGoal: 0,
+    ytdSales: 0,
+    ytdGoal: 0,
+    openOrders: 0,
+    pipeline: 0,
+    competitors: [
+      { name: 'QSC', whatWereSeeing: 'Divested Digital Cinema Speaker product line to Moving Image Technologies', ourResponse: '' },
+      { name: 'Bosch/EV', whatWereSeeing: 'New CEO David Hunter from Music Tribe replaced senior leadership team', ourResponse: '' },
+      { name: 'ADI/Snap One', whatWereSeeing: 'Introduced Episode Business Music Solution - amplifiers, DSP, controllers for commercial use', ourResponse: '' },
+      { name: 'Biamp', whatWereSeeing: 'Acquired beamforming microphone patents from ClearOne, will not continue ClearOne products', ourResponse: '' },
+    ],
+    marketTrends: 'PowerZone Connect not functioning with OvrC - deal breaker for Rave Lighting/BodyRok',
+    industryInfo: '',
+    keyProjects: 'VAI first building installation commissioning, ISE booth layout with Marketing Team, EMEA Flight Case demo system update, Training with AV Tools Guadalajara',
+    eventsAttended: '',
+    marketingCampaigns: '',
+    goodJobs: [
+      { personName: 'Eric Welch', reason: 'Great job rebuilding the Preset Library for loudspeakers within PowerZone Connect family' },
+    ],
+  },
+  {
+    directorName: 'Hayden Shamburger',
+    region: 'Strategic Accounts',
+    month: '2024-10',
+    executiveSummary: 'IPMA Affiliate Mood Media convention in San Diego was huge success - our Gold Sponsorship gave great recognition. Space Factory CEO submitted PO for first 100 locations ($86K) for coffee chain 2026 rollout with second PO for another 100 expected. Completed ProTech Blaze training and 2026 marketing plans.',
+    wins: [
+      { title: 'IPMA Convention Success', description: 'Gold Sponsorship gave great recognition, demonstrated authentic partnership. We stole the show from competition.' },
+      { title: 'Space Factory Wins', description: 'CEO submitted PO for first 100 locations ($86K) for coffee chain 2026 rollout. Second PO for 100 more locations expected March. Total 2026 should be around 250 locations.' },
+      { title: 'Mood Media Videos', description: 'Completed customer video edits for advertising and sales presentations showing Managed Services advantages with Blaze amplifiers.' },
+      { title: 'ProTech Completion', description: 'Completed Blaze amplifier trainings and finished 2026 marketing plans.' },
+    ],
+    followUps: 'Consultant week with Shawn Brechbill in Denver, Space Factory Blaze amp fulfillment, KPI quarterly meeting with Ambiance iQ CEO, LG/Stingray partnership install coordination',
+    monthlySales: 186000,
+    monthlyGoal: 200000,
+    ytdSales: 1420000,
+    ytdGoal: 1500000,
+    openOrders: 86000,
+    pipeline: 620000,
+    competitors: [
+      { name: 'BOSE', whatWereSeeing: 'At IPMA, demonstrating new net pendant DesignMax Luna DML88P - pretty cool, sounds really good with true 360 coverage', ourResponse: '' },
+    ],
+    marketTrends: '',
+    industryInfo: '',
+    keyProjects: 'Strategic Account Reporting testing, LG/Stingray partnership project',
+    eventsAttended: 'IPMA Affiliate Mood Media convention San Diego',
+    marketingCampaigns: '',
+    goodJobs: [
+      { personName: 'Steve Benoit, David Stark, Ashley Basakis', reason: 'Helping prepare all product at warehouse for IPMA show pickup and return - big cost and energy savings for Sonance!' },
+    ],
+  },
+]

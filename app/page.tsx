@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { isTestModeActive, loadTestData, clearTestData, getTestDirectors } from '@/lib/test-data/store'
 
 export default function Home() {
   const router = useRouter()
   const [directors, setDirectors] = useState<Array<{ id: string; name: string; email: string; region: string }>>([])
   const [selectedDirector, setSelectedDirector] = useState('')
   const [loading, setLoading] = useState(true)
+  const [testMode, setTestMode] = useState(false)
 
   useEffect(() => {
     // Check if there's a saved director in localStorage
@@ -16,6 +18,9 @@ export default function Home() {
     if (savedDirectorId) {
       setSelectedDirector(savedDirectorId)
     }
+
+    // Check if test mode is active
+    setTestMode(isTestModeActive())
 
     // Fetch directors from API
     fetchDirectors()
@@ -27,9 +32,18 @@ export default function Home() {
       if (res.ok) {
         const data = await res.json()
         setDirectors(data)
+      } else {
+        // API failed, use test directors if in test mode
+        if (isTestModeActive()) {
+          setDirectors(getTestDirectors())
+        }
       }
     } catch (error) {
       console.error('Failed to fetch directors:', error)
+      // Use test directors as fallback when in test mode
+      if (isTestModeActive()) {
+        setDirectors(getTestDirectors())
+      }
     } finally {
       setLoading(false)
     }
@@ -50,11 +64,30 @@ export default function Home() {
 
   const selectedDirectorData = directors.find(d => d.id === selectedDirector)
 
+  const handleLoadTestData = () => {
+    const result = loadTestData()
+    if (result.success) {
+      setTestMode(true)
+      alert(`Loaded ${result.count} test reports for October 2024. Go to Admin → Consolidated to view.`)
+    } else {
+      alert('Failed to load test data')
+    }
+  }
+
+  const handleClearTestData = () => {
+    if (clearTestData()) {
+      setTestMode(false)
+      alert('Test data cleared')
+    } else {
+      alert('Failed to clear test data')
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-[#333F48] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
+    <div className="min-h-screen bg-page-bg flex items-center justify-center p-4">
+      <div className="bg-card-bg rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
         {/* Sonance Accent Bar */}
-        <div className="h-1 bg-gradient-to-r from-[#00A3E1] to-[#333F48]"></div>
+        <div className="h-1 bg-gradient-to-r from-sonance-blue to-sonance-charcoal"></div>
 
         <div className="p-8">
           {/* Header with Sonance Logo */}
@@ -69,13 +102,13 @@ export default function Home() {
                 priority
               />
             </div>
-            <h1 className="text-xl font-bold text-[#333F48] mb-2 uppercase tracking-wide">
+            <h1 className="text-xl font-bold text-foreground mb-2 uppercase tracking-wide">
               Field Team Member
             </h1>
-            <h2 className="text-2xl font-bold text-[#00A3E1] uppercase tracking-wide">
+            <h2 className="text-2xl font-bold text-sonance-blue uppercase tracking-wide">
               Bi-Weekly Report
             </h2>
-            <p className="text-[#333F48] text-sm mt-3 opacity-70">
+            <p className="text-foreground text-sm mt-3 opacity-70">
               Comprehensive Sales Performance & Market Intelligence
             </p>
           </div>
@@ -83,13 +116,13 @@ export default function Home() {
           {/* Director Selection */}
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-[#333F48] mb-2 uppercase tracking-wide">
+              <label className="block text-sm font-semibold text-foreground mb-2 uppercase tracking-wide">
                 Select Your Name
               </label>
               <select
                 value={selectedDirector}
                 onChange={(e) => setSelectedDirector(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-[#D9D9D6] rounded-lg focus:ring-2 focus:ring-[#00A3E1] focus:border-[#00A3E1] bg-white text-[#333F48] transition-colors"
+                className="w-full px-4 py-3 border-2 border-card-border rounded-lg focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue bg-input-bg text-foreground transition-colors"
                 disabled={loading}
               >
                 <option value="">Select your name...</option>
@@ -102,11 +135,11 @@ export default function Home() {
             </div>
 
             {selectedDirectorData && (
-              <div className="bg-[#D9D9D6]/30 rounded-lg p-4 border-l-4 border-[#00A3E1]">
-                <p className="text-sm text-[#333F48]">
+              <div className="bg-muted/30 rounded-lg p-4 border-l-4 border-sonance-blue">
+                <p className="text-sm text-foreground">
                   <span className="font-semibold">Region:</span> {selectedDirectorData.region}
                 </p>
-                <p className="text-sm text-[#333F48]">
+                <p className="text-sm text-foreground">
                   <span className="font-semibold">Email:</span> {selectedDirectorData.email}
                 </p>
               </div>
@@ -115,25 +148,50 @@ export default function Home() {
             <button
               onClick={handleStartReport}
               disabled={!selectedDirector}
-              className="w-full py-4 bg-[#00A3E1] text-white font-semibold rounded-lg hover:bg-[#0091c8] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg uppercase tracking-wide"
+              className="w-full py-4 bg-sonance-blue text-white font-semibold rounded-lg hover:bg-sonance-blue/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg uppercase tracking-wide"
             >
               Start / Continue Report
             </button>
           </div>
 
           {/* Admin Link */}
-          <div className="mt-8 pt-6 border-t border-[#D9D9D6] text-center">
+          <div className="mt-8 pt-6 border-t border-card-border text-center">
             <a
               href="/admin"
-              className="text-sm text-[#333F48] opacity-60 hover:text-[#00A3E1] hover:opacity-100 transition-all uppercase tracking-wide"
+              className="text-sm text-foreground opacity-60 hover:text-sonance-blue hover:opacity-100 transition-all uppercase tracking-wide"
             >
               Admin Access
             </a>
           </div>
 
+          {/* Test Data Controls */}
+          <div className="mt-4 pt-4 border-t border-card-border">
+            {testMode ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-center gap-2 text-sm text-sonance-green">
+                  <span className="w-2 h-2 bg-sonance-green rounded-full animate-pulse"></span>
+                  Test Data Active (October 2024)
+                </div>
+                <button
+                  onClick={handleClearTestData}
+                  className="w-full py-2 border-2 border-red-400 text-red-400 rounded-lg hover:bg-red-500/10 transition-all text-sm uppercase tracking-wide"
+                >
+                  Clear Test Data
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleLoadTestData}
+                className="w-full py-2 border-2 border-sonance-green text-sonance-green rounded-lg hover:bg-sonance-green/10 transition-all text-sm uppercase tracking-wide"
+              >
+                Load Test Data (October 2024)
+              </button>
+            )}
+          </div>
+
           {/* Tagline */}
           <div className="mt-6 text-center">
-            <p className="text-xs text-[#333F48] opacity-40 italic">
+            <p className="text-xs text-foreground opacity-40 italic">
               Life is Better with Music
             </p>
           </div>

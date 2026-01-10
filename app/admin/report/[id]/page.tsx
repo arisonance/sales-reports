@@ -150,18 +150,18 @@ export default function ViewReport() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#D9D9D6]/30 flex items-center justify-center">
-        <p className="text-[#333F48]">Loading report...</p>
+      <div className="min-h-screen bg-page-bg flex items-center justify-center">
+        <p className="text-foreground">Loading report...</p>
       </div>
     )
   }
 
   if (error || !report) {
     return (
-      <div className="min-h-screen bg-[#D9D9D6]/30 flex items-center justify-center">
+      <div className="min-h-screen bg-page-bg flex items-center justify-center">
         <div className="text-center">
-          <p className="text-[#333F48] mb-4">{error || 'Report not found'}</p>
-          <Link href="/admin/dashboard" className="text-[#00A3E1] hover:text-[#0091c8] font-semibold uppercase tracking-wide">
+          <p className="text-foreground mb-4">{error || 'Report not found'}</p>
+          <Link href="/admin/dashboard" className="text-sonance-blue hover:text-sonance-blue/80 font-semibold uppercase tracking-wide">
             Back to Dashboard
           </Link>
         </div>
@@ -170,17 +170,17 @@ export default function ViewReport() {
   }
 
   return (
-    <div className="min-h-screen bg-[#D9D9D6]/30">
+    <div className="min-h-screen bg-page-bg">
       {/* Header */}
-      <div className="bg-white shadow">
-        <div className="h-1 bg-gradient-to-r from-[#00A3E1] to-[#333F48]"></div>
+      <div className="bg-card-bg shadow">
+        <div className="h-1 bg-gradient-to-r from-sonance-blue to-sonance-charcoal"></div>
         <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Link href="/admin/dashboard" className="text-[#333F48] opacity-60 hover:text-[#00A3E1] hover:opacity-100 transition-all uppercase tracking-wide text-sm">
+            <Link href="/admin/dashboard" className="text-foreground opacity-60 hover:text-sonance-blue hover:opacity-100 transition-all uppercase tracking-wide text-sm">
               &larr; Back to Dashboard
             </Link>
           </div>
-          <button className="px-4 py-2 bg-[#00A3E1] text-white rounded-lg hover:bg-[#0091c8] transition-colors text-sm font-semibold uppercase tracking-wide">
+          <button className="px-4 py-2 bg-sonance-blue text-white rounded-lg hover:bg-sonance-blue/90 transition-colors text-sm font-semibold uppercase tracking-wide">
             Export PDF
           </button>
         </div>
@@ -189,8 +189,8 @@ export default function ViewReport() {
       {/* Report Content */}
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Header Section */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-[#00A3E1] to-[#333F48]"></div>
+        <div className="bg-card-bg rounded-lg shadow overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-sonance-blue to-sonance-charcoal"></div>
           <div className="p-6">
             <div className="text-center mb-6">
               <img
@@ -198,27 +198,27 @@ export default function ViewReport() {
                 alt="Sonance"
                 className="h-6 mx-auto mb-4"
               />
-              <h1 className="text-xl font-bold text-[#333F48] uppercase tracking-wide">
+              <h1 className="text-xl font-bold text-foreground uppercase tracking-wide">
                 Regional Sales Director Monthly Report
               </h1>
-              <p className="text-[#00A3E1] font-semibold">{formatMonth(report.month)}</p>
+              <p className="text-sonance-blue font-semibold">{formatMonth(report.month)}</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <span className="text-[#333F48] opacity-60 uppercase tracking-wide text-xs">Director</span>
-                <p className="font-semibold text-[#333F48]">{report.directorName}</p>
+                <span className="text-foreground opacity-60 uppercase tracking-wide text-xs">Director</span>
+                <p className="font-semibold text-foreground">{report.directorName}</p>
               </div>
               <div>
-                <span className="text-[#333F48] opacity-60 uppercase tracking-wide text-xs">Region</span>
-                <p className="font-semibold text-[#333F48]">{report.region}</p>
+                <span className="text-foreground opacity-60 uppercase tracking-wide text-xs">Region</span>
+                <p className="font-semibold text-foreground">{report.region}</p>
               </div>
               <div>
-                <span className="text-[#333F48] opacity-60 uppercase tracking-wide text-xs">Email</span>
-                <p className="font-semibold text-[#333F48]">{report.email}</p>
+                <span className="text-foreground opacity-60 uppercase tracking-wide text-xs">Email</span>
+                <p className="font-semibold text-foreground">{report.email}</p>
               </div>
               <div>
-                <span className="text-[#333F48] opacity-60 uppercase tracking-wide text-xs">Report Period</span>
-                <p className="font-semibold text-[#333F48]">{formatMonth(report.month)}</p>
+                <span className="text-foreground opacity-60 uppercase tracking-wide text-xs">Report Period</span>
+                <p className="font-semibold text-foreground">{formatMonth(report.month)}</p>
               </div>
             </div>
           </div>
@@ -226,37 +226,37 @@ export default function ViewReport() {
 
         {/* Executive Summary */}
         {report.executiveSummary && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-[#333F48] mb-4 uppercase tracking-wide">Executive Summary</h2>
-            <p className="text-[#333F48] whitespace-pre-wrap">{report.executiveSummary}</p>
+          <div className="bg-card-bg rounded-lg shadow p-6">
+            <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Executive Summary</h2>
+            <p className="text-foreground whitespace-pre-wrap">{report.executiveSummary}</p>
           </div>
         )}
 
         {/* Sales Performance */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-bold text-[#333F48] mb-4 uppercase tracking-wide">Regional Performance</h2>
+        <div className="bg-card-bg rounded-lg shadow p-6">
+          <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Regional Performance</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="bg-[#00A3E1]/10 rounded-lg p-4">
-              <p className="text-sm text-[#333F48] opacity-60">Monthly Sales</p>
-              <p className="text-xl font-bold text-[#00A3E1]">{formatCurrency(report.monthlySales)}</p>
-              <p className="text-xs text-gray-400">Goal: {formatCurrency(report.monthlyGoal)}</p>
+            <div className="bg-sonance-blue/10 rounded-lg p-4">
+              <p className="text-sm text-foreground opacity-60">Monthly Sales</p>
+              <p className="text-xl font-bold text-sonance-blue">{formatCurrency(report.monthlySales)}</p>
+              <p className="text-xs text-muted-foreground">Goal: {formatCurrency(report.monthlyGoal)}</p>
             </div>
-            <div className="bg-[#00B2A9]/10 rounded-lg p-4">
-              <p className="text-sm text-[#333F48] opacity-60">YTD Sales</p>
-              <p className="text-xl font-bold text-[#00B2A9]">{formatCurrency(report.ytdSales)}</p>
-              <p className="text-xs text-gray-400">Goal: {formatCurrency(report.ytdGoal)}</p>
+            <div className="bg-sonance-green/10 rounded-lg p-4">
+              <p className="text-sm text-foreground opacity-60">YTD Sales</p>
+              <p className="text-xl font-bold text-sonance-green">{formatCurrency(report.ytdSales)}</p>
+              <p className="text-xs text-muted-foreground">Goal: {formatCurrency(report.ytdGoal)}</p>
             </div>
-            <div className="bg-[#333F48]/10 rounded-lg p-4">
-              <p className="text-sm text-[#333F48] opacity-60">Open Orders</p>
-              <p className="text-xl font-bold text-[#333F48]">{formatCurrency(report.openOrders)}</p>
+            <div className="bg-muted/30 rounded-lg p-4">
+              <p className="text-sm text-foreground opacity-60">Open Orders</p>
+              <p className="text-xl font-bold text-foreground">{formatCurrency(report.openOrders)}</p>
             </div>
-            <div className="bg-[#D9D9D6]/40 rounded-lg p-4">
-              <p className="text-sm text-[#333F48] opacity-60">Pipeline</p>
-              <p className="text-xl font-bold text-[#333F48]">{formatCurrency(report.pipeline)}</p>
+            <div className="bg-muted/20 rounded-lg p-4">
+              <p className="text-sm text-foreground opacity-60">Pipeline</p>
+              <p className="text-xl font-bold text-foreground">{formatCurrency(report.pipeline)}</p>
             </div>
-            <div className="bg-[#D9D9D6]/30 rounded-lg p-4">
-              <p className="text-sm text-[#333F48] opacity-60">% to Monthly Goal</p>
-              <p className="text-xl font-bold text-[#333F48]">
+            <div className="bg-muted/20 rounded-lg p-4">
+              <p className="text-sm text-foreground opacity-60">% to Monthly Goal</p>
+              <p className="text-xl font-bold text-foreground">
                 {report.monthlyGoal > 0 ? Math.round((report.monthlySales / report.monthlyGoal) * 100) : 0}%
               </p>
             </div>
@@ -265,24 +265,24 @@ export default function ViewReport() {
 
         {/* Rep Firms */}
         {report.repFirms.length > 0 && report.repFirms.some(f => f.name) && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-[#333F48] mb-4 uppercase tracking-wide">Rep Firm Performance</h2>
+          <div className="bg-card-bg rounded-lg shadow p-6">
+            <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Rep Firm Performance</h2>
             <div className="space-y-4">
               {report.repFirms.filter(f => f.name).map((firm) => (
-                <div key={firm.id} className="bg-[#D9D9D6]/30 rounded-lg p-4">
-                  <h3 className="font-medium text-[#333F48]">{firm.name}</h3>
+                <div key={firm.id} className="bg-muted/20 rounded-lg p-4">
+                  <h3 className="font-medium text-foreground">{firm.name}</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-sm">
                     <div>
-                      <span className="text-[#333F48] opacity-60">Monthly:</span> {formatCurrency(firm.monthlySales)}
+                      <span className="text-foreground opacity-60">Monthly:</span> {formatCurrency(firm.monthlySales)}
                     </div>
                     <div>
-                      <span className="text-[#333F48] opacity-60">YTD:</span> {formatCurrency(firm.ytdSales)}
+                      <span className="text-foreground opacity-60">YTD:</span> {formatCurrency(firm.ytdSales)}
                     </div>
                     <div>
-                      <span className="text-[#333F48] opacity-60">% to Goal:</span> {firm.percentToGoal}%
+                      <span className="text-foreground opacity-60">% to Goal:</span> {firm.percentToGoal}%
                     </div>
                     <div>
-                      <span className="text-[#333F48] opacity-60">YoY Growth:</span> {firm.yoyGrowth}%
+                      <span className="text-foreground opacity-60">YoY Growth:</span> {firm.yoyGrowth}%
                     </div>
                   </div>
                 </div>
@@ -293,20 +293,20 @@ export default function ViewReport() {
 
         {/* Wins */}
         {report.wins.length > 0 && report.wins.some(w => w.title) && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-[#333F48] mb-4 uppercase tracking-wide">Wins & Highlights</h2>
+          <div className="bg-card-bg rounded-lg shadow p-6">
+            <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Wins & Highlights</h2>
             <div className="space-y-4">
               {report.wins.filter(w => w.title).map((win) => (
-                <div key={win.id} className="border-l-4 border-[#00B2A9] pl-4">
-                  <h3 className="font-medium text-[#333F48]">{win.title}</h3>
-                  <p className="text-[#333F48] opacity-80 text-sm mt-1">{win.description}</p>
+                <div key={win.id} className="border-l-4 border-sonance-green pl-4">
+                  <h3 className="font-medium text-foreground">{win.title}</h3>
+                  <p className="text-foreground opacity-80 text-sm mt-1">{win.description}</p>
                 </div>
               ))}
             </div>
             {report.followUps && (
-              <div className="mt-6 pt-4 border-t">
-                <h3 className="font-medium text-[#333F48] mb-2">Follow-ups & Working On</h3>
-                <p className="text-[#333F48] opacity-80 text-sm whitespace-pre-wrap">{report.followUps}</p>
+              <div className="mt-6 pt-4 border-t border-card-border">
+                <h3 className="font-medium text-foreground mb-2">Follow-ups & Working On</h3>
+                <p className="text-foreground opacity-80 text-sm whitespace-pre-wrap">{report.followUps}</p>
               </div>
             )}
           </div>
@@ -314,21 +314,21 @@ export default function ViewReport() {
 
         {/* Competition */}
         {(report.competitors.length > 0 && report.competitors.some(c => c.name)) || report.marketTrends ? (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-[#333F48] mb-4 uppercase tracking-wide">Competitive Intelligence</h2>
+          <div className="bg-card-bg rounded-lg shadow p-6">
+            <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Competitive Intelligence</h2>
             {report.competitors.filter(c => c.name).length > 0 && (
               <div className="space-y-4">
                 {report.competitors.filter(c => c.name).map((comp) => (
-                  <div key={comp.id} className="bg-[#00A3E1]/5 border-l-4 border-[#00A3E1] rounded-lg p-4">
-                    <h3 className="font-medium text-[#333F48]">{comp.name}</h3>
+                  <div key={comp.id} className="bg-sonance-blue/5 border-l-4 border-sonance-blue rounded-lg p-4">
+                    <h3 className="font-medium text-foreground">{comp.name}</h3>
                     <div className="mt-2 space-y-2 text-sm">
                       <div>
-                        <span className="text-[#333F48] opacity-60 font-medium">What We&apos;re Seeing:</span>
-                        <p className="text-[#333F48] opacity-80">{comp.whatWereSeeing}</p>
+                        <span className="text-foreground opacity-60 font-medium">What We&apos;re Seeing:</span>
+                        <p className="text-foreground opacity-80">{comp.whatWereSeeing}</p>
                       </div>
                       <div>
-                        <span className="text-[#333F48] opacity-60 font-medium">Our Response:</span>
-                        <p className="text-[#333F48] opacity-80">{comp.ourResponse}</p>
+                        <span className="text-foreground opacity-60 font-medium">Our Response:</span>
+                        <p className="text-foreground opacity-80">{comp.ourResponse}</p>
                       </div>
                     </div>
                   </div>
@@ -336,9 +336,9 @@ export default function ViewReport() {
               </div>
             )}
             {report.marketTrends && (
-              <div className={report.competitors.filter(c => c.name).length > 0 ? "mt-6 pt-4 border-t" : ""}>
-                <h3 className="font-medium text-[#333F48] mb-2">Market Trends</h3>
-                <p className="text-[#333F48] opacity-80 text-sm whitespace-pre-wrap">{report.marketTrends}</p>
+              <div className={report.competitors.filter(c => c.name).length > 0 ? "mt-6 pt-4 border-t border-card-border" : ""}>
+                <h3 className="font-medium text-foreground mb-2">Market Trends</h3>
+                <p className="text-foreground opacity-80 text-sm whitespace-pre-wrap">{report.marketTrends}</p>
               </div>
             )}
           </div>
@@ -346,25 +346,25 @@ export default function ViewReport() {
 
         {/* Key Initiatives */}
         {(report.keyProjects || report.distributionUpdates || report.challengesBlockers) && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-[#333F48] mb-4 uppercase tracking-wide">Key Initiatives</h2>
+          <div className="bg-card-bg rounded-lg shadow p-6">
+            <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Key Initiatives</h2>
             <div className="space-y-4">
               {report.keyProjects && (
                 <div>
-                  <h3 className="font-medium text-[#333F48]">Key Projects</h3>
-                  <p className="text-[#333F48] opacity-80 text-sm mt-1 whitespace-pre-wrap">{report.keyProjects}</p>
+                  <h3 className="font-medium text-foreground">Key Projects</h3>
+                  <p className="text-foreground opacity-80 text-sm mt-1 whitespace-pre-wrap">{report.keyProjects}</p>
                 </div>
               )}
               {report.distributionUpdates && (
                 <div>
-                  <h3 className="font-medium text-[#333F48]">Distribution & Partnership Updates</h3>
-                  <p className="text-[#333F48] opacity-80 text-sm mt-1 whitespace-pre-wrap">{report.distributionUpdates}</p>
+                  <h3 className="font-medium text-foreground">Distribution & Partnership Updates</h3>
+                  <p className="text-foreground opacity-80 text-sm mt-1 whitespace-pre-wrap">{report.distributionUpdates}</p>
                 </div>
               )}
               {report.challengesBlockers && (
                 <div>
-                  <h3 className="font-medium text-[#333F48]">Challenges & Blockers</h3>
-                  <p className="text-[#333F48] opacity-80 text-sm mt-1 whitespace-pre-wrap">{report.challengesBlockers}</p>
+                  <h3 className="font-medium text-foreground">Challenges & Blockers</h3>
+                  <p className="text-foreground opacity-80 text-sm mt-1 whitespace-pre-wrap">{report.challengesBlockers}</p>
                 </div>
               )}
             </div>
@@ -373,19 +373,19 @@ export default function ViewReport() {
 
         {/* Marketing & Events */}
         {(report.eventsAttended || report.marketingCampaigns) && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-[#333F48] mb-4 uppercase tracking-wide">Marketing & Events</h2>
+          <div className="bg-card-bg rounded-lg shadow p-6">
+            <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Marketing & Events</h2>
             <div className="space-y-4">
               {report.eventsAttended && (
                 <div>
-                  <h3 className="font-medium text-[#333F48]">Events Attended</h3>
-                  <p className="text-[#333F48] opacity-80 text-sm mt-1 whitespace-pre-wrap">{report.eventsAttended}</p>
+                  <h3 className="font-medium text-foreground">Events Attended</h3>
+                  <p className="text-foreground opacity-80 text-sm mt-1 whitespace-pre-wrap">{report.eventsAttended}</p>
                 </div>
               )}
               {report.marketingCampaigns && (
                 <div>
-                  <h3 className="font-medium text-[#333F48]">Marketing Campaigns</h3>
-                  <p className="text-[#333F48] opacity-80 text-sm mt-1 whitespace-pre-wrap">{report.marketingCampaigns}</p>
+                  <h3 className="font-medium text-foreground">Marketing Campaigns</h3>
+                  <p className="text-foreground opacity-80 text-sm mt-1 whitespace-pre-wrap">{report.marketingCampaigns}</p>
                 </div>
               )}
             </div>
@@ -394,11 +394,11 @@ export default function ViewReport() {
 
         {/* Photos */}
         {report.photos.length > 0 && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-[#333F48] mb-4 uppercase tracking-wide">Photos</h2>
+          <div className="bg-card-bg rounded-lg shadow p-6">
+            <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Photos</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {report.photos.map((photo) => (
-                <div key={photo.id} className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                <div key={photo.id} className="aspect-video bg-muted rounded-lg overflow-hidden">
                   <img
                     src={photo.url}
                     alt={photo.filename}

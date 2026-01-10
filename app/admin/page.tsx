@@ -37,10 +37,10 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-[#333F48] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+    <div className="min-h-screen bg-page-bg flex items-center justify-center p-4">
+      <div className="bg-card-bg rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
         {/* Sonance Accent Bar */}
-        <div className="h-1 bg-gradient-to-r from-[#00A3E1] to-[#333F48]"></div>
+        <div className="h-1 bg-gradient-to-r from-sonance-blue to-sonance-charcoal"></div>
 
         <div className="p-8">
           <div className="text-center mb-8">
@@ -54,13 +54,13 @@ export default function AdminLogin() {
                 priority
               />
             </div>
-            <h1 className="text-xl font-bold text-[#333F48] mb-2 uppercase tracking-wide">Admin Access</h1>
-            <p className="text-[#333F48] opacity-70">Enter the admin password to continue</p>
+            <h1 className="text-xl font-bold text-foreground mb-2 uppercase tracking-wide">Admin Access</h1>
+            <p className="text-foreground opacity-70">Enter the admin password to continue</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-[#333F48] mb-2 uppercase tracking-wide">
+              <label className="block text-sm font-semibold text-foreground mb-2 uppercase tracking-wide">
                 Password
               </label>
               <input
@@ -68,13 +68,13 @@ export default function AdminLogin() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter admin password"
-                className="w-full px-4 py-3 border-2 border-[#D9D9D6] rounded-lg focus:ring-2 focus:ring-[#00A3E1] focus:border-[#00A3E1] bg-white text-[#333F48] transition-colors"
+                className="w-full px-4 py-3 border-2 border-card-border rounded-lg focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue bg-input-bg text-foreground transition-colors"
                 required
               />
             </div>
 
             {error && (
-              <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm border-l-4 border-red-500">
+              <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm border-l-4 border-red-500 dark:bg-red-900/30 dark:text-red-400">
                 {error}
               </div>
             )}
@@ -82,14 +82,14 @@ export default function AdminLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-[#00A3E1] text-white font-semibold rounded-lg hover:bg-[#0091c8] transition-all disabled:opacity-50 shadow-lg uppercase tracking-wide"
+              className="w-full py-4 bg-sonance-blue text-white font-semibold rounded-lg hover:bg-[#0091c8] transition-all disabled:opacity-50 shadow-lg uppercase tracking-wide"
             >
               {loading ? 'Authenticating...' : 'Login'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <a href="/" className="text-sm text-[#333F48] opacity-60 hover:text-[#00A3E1] hover:opacity-100 transition-all uppercase tracking-wide">
+            <a href="/" className="text-sm text-foreground opacity-60 hover:text-sonance-blue hover:opacity-100 transition-all uppercase tracking-wide">
               Back to Home
             </a>
           </div>
