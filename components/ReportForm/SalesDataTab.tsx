@@ -1,6 +1,8 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { ReportData } from '@/app/report/page'
+import { RepFirmMaster } from '@/lib/supabase'
 
 interface Props {
   data: ReportData
@@ -8,6 +10,24 @@ interface Props {
 }
 
 export default function SalesDataTab({ data, updateData }: Props) {
+  const [repFirmOptions, setRepFirmOptions] = useState<RepFirmMaster[]>([])
+
+  useEffect(() => {
+    fetchRepFirmOptions()
+  }, [])
+
+  const fetchRepFirmOptions = async () => {
+    try {
+      const res = await fetch('/api/rep-firms')
+      if (res.ok) {
+        const data = await res.json()
+        setRepFirmOptions(data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch rep firm options:', err)
+    }
+  }
+
   const addRepFirm = () => {
     const newRepFirm = {
       id: Date.now().toString(),
@@ -140,13 +160,40 @@ export default function SalesDataTab({ data, updateData }: Props) {
                 <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
                   Rep Firm Name
                 </label>
-                <input
-                  type="text"
-                  value={firm.name}
-                  onChange={(e) => updateRepFirm(firm.id, 'name', e.target.value)}
-                  placeholder="e.g., Pro Tech"
-                  className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
-                />
+                {repFirmOptions.length > 0 ? (
+                  <div className="flex gap-2">
+                    <select
+                      value={firm.name}
+                      onChange={(e) => updateRepFirm(firm.id, 'name', e.target.value)}
+                      className="flex-1 px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                    >
+                      <option value="">— Select Rep Firm —</option>
+                      {repFirmOptions.map((option) => (
+                        <option key={option.id} value={option.name}>
+                          {option.name}
+                        </option>
+                      ))}
+                      <option value="__custom__">Other (type custom name)</option>
+                    </select>
+                    {firm.name === '__custom__' || (firm.name && !repFirmOptions.some(o => o.name === firm.name)) ? (
+                      <input
+                        type="text"
+                        value={firm.name === '__custom__' ? '' : firm.name}
+                        onChange={(e) => updateRepFirm(firm.id, 'name', e.target.value)}
+                        placeholder="Enter rep firm name"
+                        className="flex-1 px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                      />
+                    ) : null}
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    value={firm.name}
+                    onChange={(e) => updateRepFirm(firm.id, 'name', e.target.value)}
+                    placeholder="e.g., Pro Tech"
+                    className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                  />
+                )}
               </div>
 
               <div>

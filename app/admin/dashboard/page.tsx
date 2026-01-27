@@ -105,6 +105,12 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <Link
+              href="/admin/manage"
+              className="px-4 py-2 border-2 border-sonance-blue text-sonance-blue rounded-lg hover:bg-sonance-blue hover:text-white transition-colors text-sm font-semibold uppercase tracking-wide"
+            >
+              Manage Data
+            </Link>
+            <Link
               href="/admin/consolidated"
               className="px-4 py-2 bg-sonance-blue text-white rounded-lg hover:bg-sonance-blue/90 transition-colors text-sm font-semibold uppercase tracking-wide"
             >

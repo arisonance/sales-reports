@@ -6,12 +6,29 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Types for our database tables
+export interface Region {
+  id: string
+  name: string
+  created_at: string
+}
+
+export interface RepFirmMaster {
+  id: string
+  name: string
+  region_id: string | null
+  active: boolean
+  created_at: string
+  region?: Region // For joined queries
+}
+
 export interface Director {
   id: string
   name: string
   email: string
-  region: string
+  region: string // Legacy text field
+  region_id: string | null
   created_at: string
+  regions?: Region // For joined queries
 }
 
 export interface Report {
