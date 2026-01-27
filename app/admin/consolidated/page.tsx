@@ -1,11 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import { pdf } from '@react-pdf/renderer'
-import { isTestModeActive, getTestConsolidatedData } from '@/lib/test-data/store'
 
 interface ReportInfo {
   id: string
@@ -98,7 +96,6 @@ export default function ConsolidatedReport() {
   })
   const [data, setData] = useState<ConsolidatedData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [testModeActive, setTestModeActive] = useState(false)
 
   // Report selection
   const [selectedReports, setSelectedReports] = useState<Set<string>>(new Set())
@@ -128,29 +125,16 @@ export default function ConsolidatedReport() {
     try {
       setLoading(true)
 
-      // Check if test mode is active
-      const isTestMode = isTestModeActive()
-      setTestModeActive(isTestMode)
-
       if (periodType === 'month') {
         const res = await fetch(`/api/consolidated?month=${selectedMonth}`)
         if (!res.ok) throw new Error('Failed to fetch consolidated data')
-        let consolidatedData = await res.json()
-
-        // If test mode is active and looking at October 2024, merge test data
-        if (isTestMode && selectedMonth === '2024-10') {
-          const testData = getTestConsolidatedData('2024-10')
-          if (testData) {
-            // Use test data as primary (replace real data for October 2024)
-            consolidatedData = testData
-          }
-        }
+        const consolidatedData = await res.json()
 
         setData(consolidatedData)
 
-        // Auto-select all reports (including drafts for testing)
+        // Auto-select all submitted reports
         const submittedIds = consolidatedData.regions
-          ?.filter((r: { status: string; reportId: string }) => (r.status === 'submitted' || r.status === 'draft') && r.reportId)
+          ?.filter((r: { status: string; reportId: string }) => r.status === 'submitted' && r.reportId)
           .map((r: { reportId: string }) => r.reportId) || []
         setSelectedReports(new Set(submittedIds))
       } else {
@@ -438,12 +422,6 @@ export default function ConsolidatedReport() {
       {/* Header */}
       <div className="bg-card-bg shadow">
         <div className="h-1 bg-gradient-to-r from-sonance-blue to-sonance-charcoal"></div>
-        {testModeActive && (
-          <div className="bg-sonance-green/10 border-b border-sonance-green/30 px-4 py-2 flex items-center justify-center gap-2 text-sm text-sonance-green">
-            <span className="w-2 h-2 bg-sonance-green rounded-full animate-pulse"></span>
-            Test Data Mode - Showing October 2024 sample reports
-          </div>
-        )}
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Link href="/admin/dashboard" className="text-foreground opacity-60 hover:text-sonance-blue hover:opacity-100 transition-all uppercase tracking-wide text-sm">

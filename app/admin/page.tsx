@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 
 export default function AdminLogin() {
   const router = useRouter()
@@ -89,9 +90,9 @@ export default function AdminLogin() {
           </form>
 
           <div className="mt-6 text-center">
-            <a href="/" className="text-sm text-foreground opacity-60 hover:text-sonance-blue hover:opacity-100 transition-all uppercase tracking-wide">
+            <Link href="/" className="text-sm text-foreground opacity-60 hover:text-sonance-blue hover:opacity-100 transition-all uppercase tracking-wide">
               Back to Home
-            </a>
+            </Link>
           </div>
         </div>
       </div>

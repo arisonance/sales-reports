@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { supabase } from '@/lib/supabase'
-import { octoberReports } from '@/lib/test-data/october-reports'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -99,51 +98,6 @@ async function fetchFullReport(reportId: string): Promise<FullReport | null> {
     marketTrends: marketTrends?.observations || '',
     followUps: followUps?.content || '',
     photos: photos || []
-  }
-}
-
-// Convert test report to FullReport format
-function getTestReport(testId: string): FullReport | null {
-  const idx = parseInt(testId.replace('test-', ''))
-  const testReport = octoberReports[idx]
-  if (!testReport) return null
-
-  return {
-    id: testId,
-    month: testReport.month,
-    executive_summary: testReport.executiveSummary,
-    directors: {
-      name: testReport.directorName,
-      region: testReport.region,
-      email: '',
-    },
-    wins: testReport.wins.map(w => ({ title: w.title, description: w.description })),
-    repFirms: [],
-    competitors: testReport.competitors.map(c => ({
-      name: c.name,
-      what_were_seeing: c.whatWereSeeing,
-      our_response: c.ourResponse,
-    })),
-    regionalPerformance: {
-      monthly_sales: testReport.monthlySales,
-      monthly_goal: testReport.monthlyGoal,
-      ytd_sales: testReport.ytdSales,
-      ytd_goal: testReport.ytdGoal,
-      open_orders: testReport.openOrders,
-      pipeline: testReport.pipeline,
-    },
-    keyInitiatives: {
-      key_projects: testReport.keyProjects,
-      distribution_updates: '',
-      challenges_blockers: '',
-    },
-    marketingEvents: {
-      events_attended: testReport.eventsAttended,
-      marketing_campaigns: testReport.marketingCampaigns,
-    },
-    marketTrends: testReport.marketTrends,
-    followUps: testReport.followUps,
-    photos: [],
   }
 }
 
@@ -294,14 +248,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch all selected reports - handle both real and test reports
-    const reportPromises = reportIds.map((id: string) => {
-      if (id.startsWith('test-')) {
-        // Return test report synchronously wrapped in Promise
-        return Promise.resolve(getTestReport(id))
-      }
-      return fetchFullReport(id)
-    })
+    // Fetch all selected reports
+    const reportPromises = reportIds.map((id: string) => fetchFullReport(id))
     const reports = (await Promise.all(reportPromises)).filter(Boolean) as FullReport[]
 
     if (reports.length === 0) {

@@ -1082,7 +1082,7 @@ export const GlobalSummaryPDF = ({ periodType, periodValue, structured, photos =
         <View style={styles.backContent}>
           <Image src={getImageUrl(IMAGES.logoReverse)} style={styles.backLogo} />
 
-          <Text style={styles.backTagline}>"Life is Better with Music"</Text>
+          <Text style={styles.backTagline}>&quot;Life is Better with Music&quot;</Text>
 
           <View style={styles.backDivider} />
 

@@ -11,7 +11,6 @@ import CompetitionTab from '@/components/ReportForm/CompetitionTab'
 import MarketingEventsTab from '@/components/ReportForm/MarketingEventsTab'
 import CopyFromPreviousBanner from '@/components/ReportForm/CopyFromPreviousBanner'
 import CopyFromPreviousModal from '@/components/ReportForm/CopyFromPreviousModal'
-import { octoberReports } from '@/lib/test-data/october-reports'
 
 const tabs = [
   { id: 'basic', label: 'Basic Info', shortLabel: 'Info' },
@@ -139,10 +138,7 @@ export default function ReportPage() {
 
   const loadReportData = async (directorId: string) => {
     try {
-      // Check for test data mode FIRST - before hitting the database
-      const isTestMode = localStorage.getItem('sonance_test_data_active') === 'true'
-
-      // Get director info (from API or test data)
+      // Get director info from API
       let director: { id: string; name: string; region: string; email: string } | undefined
 
       const directorsRes = await fetch('/api/directors')
@@ -151,52 +147,8 @@ export default function ReportPage() {
         director = directors.find((d: { id: string }) => d.id === directorId)
       }
 
-      // If API failed and in test mode, get director from config
-      if (!director && isTestMode) {
-        const { getTestDirectors } = await import('@/lib/test-data/store')
-        const testDirectors = getTestDirectors()
-        director = testDirectors.find((d: { id: string }) => d.id === directorId)
-      }
-
       if (director) {
-        // If test mode is active, load test data directly (skip database)
-        if (isTestMode) {
-          const testReport = octoberReports.find(r => r.directorName === director!.name)
-          if (testReport) {
-            setReportData({
-              directorId: director.id,
-              directorName: director.name,
-              region: director.region,
-              email: director.email,
-              month: testReport.month,
-              executiveSummary: testReport.executiveSummary,
-              wins: testReport.wins.map((w, i) => ({ id: String(i + 1), ...w })),
-              followUps: testReport.followUps,
-              monthlySales: testReport.monthlySales,
-              monthlyGoal: testReport.monthlyGoal,
-              ytdSales: testReport.ytdSales,
-              ytdGoal: testReport.ytdGoal,
-              openOrders: testReport.openOrders,
-              pipeline: testReport.pipeline,
-              repFirms: [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0 }],
-              competitors: testReport.competitors.map((c, i) => ({ id: String(i + 1), ...c })),
-              marketTrends: testReport.marketTrends,
-              industryInfo: testReport.industryInfo,
-              keyProjects: testReport.keyProjects,
-              distributionUpdates: '',
-              challengesBlockers: '',
-              eventsAttended: testReport.eventsAttended,
-              marketingCampaigns: testReport.marketingCampaigns,
-              photos: [],
-              goodJobs: testReport.goodJobs.map((g, i) => ({ id: String(i + 1), ...g })),
-            })
-            setLoading(false)
-            isInitialLoad.current = false
-            return // Skip database lookup
-          }
-        }
-
-        // Normal flow: Check for existing report for current month
+        // Check for existing report for current month
         const currentMonth = new Date().toISOString().slice(0, 7)
         const reportRes = await fetch('/api/reports/check', {
             method: 'POST',

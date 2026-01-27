@@ -13,20 +13,19 @@ export default function SalesDataTab({ data, updateData }: Props) {
   const [repFirmOptions, setRepFirmOptions] = useState<RepFirmMaster[]>([])
 
   useEffect(() => {
+    const fetchRepFirmOptions = async () => {
+      try {
+        const res = await fetch('/api/rep-firms')
+        if (res.ok) {
+          const data = await res.json()
+          setRepFirmOptions(data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch rep firm options:', err)
+      }
+    }
     fetchRepFirmOptions()
   }, [])
-
-  const fetchRepFirmOptions = async () => {
-    try {
-      const res = await fetch('/api/rep-firms')
-      if (res.ok) {
-        const data = await res.json()
-        setRepFirmOptions(data)
-      }
-    } catch (err) {
-      console.error('Failed to fetch rep firm options:', err)
-    }
-  }
 
   const addRepFirm = () => {
     const newRepFirm = {

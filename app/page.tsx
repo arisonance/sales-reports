@@ -3,14 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { isTestModeActive, loadTestData, clearTestData, getTestDirectors } from '@/lib/test-data/store'
 
 export default function Home() {
   const router = useRouter()
   const [directors, setDirectors] = useState<Array<{ id: string; name: string; email: string; region: string }>>([])
   const [selectedDirector, setSelectedDirector] = useState('')
   const [loading, setLoading] = useState(true)
-  const [testMode, setTestMode] = useState(false)
 
   useEffect(() => {
     // Check if there's a saved director in localStorage
@@ -18,9 +16,6 @@ export default function Home() {
     if (savedDirectorId) {
       setSelectedDirector(savedDirectorId)
     }
-
-    // Check if test mode is active
-    setTestMode(isTestModeActive())
 
     // Fetch directors from API
     fetchDirectors()
@@ -32,18 +27,9 @@ export default function Home() {
       if (res.ok) {
         const data = await res.json()
         setDirectors(data)
-      } else {
-        // API failed, use test directors if in test mode
-        if (isTestModeActive()) {
-          setDirectors(getTestDirectors())
-        }
       }
     } catch (error) {
       console.error('Failed to fetch directors:', error)
-      // Use test directors as fallback when in test mode
-      if (isTestModeActive()) {
-        setDirectors(getTestDirectors())
-      }
     } finally {
       setLoading(false)
     }
@@ -63,25 +49,6 @@ export default function Home() {
   }
 
   const selectedDirectorData = directors.find(d => d.id === selectedDirector)
-
-  const handleLoadTestData = () => {
-    const result = loadTestData()
-    if (result.success) {
-      setTestMode(true)
-      alert(`Loaded ${result.count} test reports for October 2024. Go to Admin → Consolidated to view.`)
-    } else {
-      alert('Failed to load test data')
-    }
-  }
-
-  const handleClearTestData = () => {
-    if (clearTestData()) {
-      setTestMode(false)
-      alert('Test data cleared')
-    } else {
-      alert('Failed to clear test data')
-    }
-  }
 
   return (
     <div className="min-h-screen bg-page-bg flex items-center justify-center p-4">
@@ -162,31 +129,6 @@ export default function Home() {
             >
               Admin Access
             </a>
-          </div>
-
-          {/* Test Data Controls */}
-          <div className="mt-4 pt-4 border-t border-card-border">
-            {testMode ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-center gap-2 text-sm text-sonance-green">
-                  <span className="w-2 h-2 bg-sonance-green rounded-full animate-pulse"></span>
-                  Test Data Active (October 2024)
-                </div>
-                <button
-                  onClick={handleClearTestData}
-                  className="w-full py-2 border-2 border-red-400 text-red-400 rounded-lg hover:bg-red-500/10 transition-all text-sm uppercase tracking-wide"
-                >
-                  Clear Test Data
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={handleLoadTestData}
-                className="w-full py-2 border-2 border-sonance-green text-sonance-green rounded-lg hover:bg-sonance-green/10 transition-all text-sm uppercase tracking-wide"
-              >
-                Load Test Data (October 2024)
-              </button>
-            )}
           </div>
 
           {/* Tagline */}
