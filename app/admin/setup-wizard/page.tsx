@@ -34,6 +34,16 @@ export default function SetupWizardPage() {
   const [repFirmSearch, setRepFirmSearch] = useState('')
   const [customerSearch, setCustomerSearch] = useState('')
 
+  // Add new item forms
+  const [showAddRepFirm, setShowAddRepFirm] = useState(false)
+  const [newRepFirmName, setNewRepFirmName] = useState('')
+  const [newRepFirmRegionId, setNewRepFirmRegionId] = useState('')
+  const [addingRepFirm, setAddingRepFirm] = useState(false)
+
+  const [showAddCustomer, setShowAddCustomer] = useState(false)
+  const [newCustomerName, setNewCustomerName] = useState('')
+  const [addingCustomer, setAddingCustomer] = useState(false)
+
   // UI state
   const [loading, setLoading] = useState(true)
   const [loadingSetup, setLoadingSetup] = useState(false)
@@ -153,6 +163,62 @@ export default function SetupWizardPage() {
         ? prev.filter(id => id !== customerId)
         : [...prev, customerId]
     )
+  }
+
+  const handleAddRepFirm = async () => {
+    if (!newRepFirmName.trim()) return
+
+    setAddingRepFirm(true)
+    try {
+      const res = await fetch('/api/rep-firms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newRepFirmName.trim(),
+          region_id: newRepFirmRegionId || null,
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to add rep firm')
+
+      const newRepFirm = await res.json()
+      setRepFirms(prev => [...prev, newRepFirm])
+      setRepFirmIds(prev => [...prev, newRepFirm.id]) // Auto-select the new one
+      setNewRepFirmName('')
+      setNewRepFirmRegionId('')
+      setShowAddRepFirm(false)
+    } catch (err) {
+      setError('Failed to add rep firm')
+    } finally {
+      setAddingRepFirm(false)
+    }
+  }
+
+  const handleAddCustomer = async () => {
+    if (!newCustomerName.trim()) return
+
+    setAddingCustomer(true)
+    try {
+      const res = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newCustomerName.trim(),
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to add customer')
+
+      const newCustomer = await res.json()
+      setCustomers(prev => [...prev, newCustomer])
+      setCustomerIds(prev => [...prev, newCustomer.id]) // Auto-select the new one
+      setNewCustomerName('')
+      setShowAddCustomer(false)
+    } catch (err) {
+      setError('Failed to add customer')
+    } finally {
+      setAddingCustomer(false)
+    }
   }
 
   const handleSave = async () => {
@@ -380,15 +446,80 @@ export default function SetupWizardPage() {
 
             {/* Rep Firm Assignment */}
             <div className="bg-card-bg rounded-lg shadow mb-6">
-              <div className="px-6 py-4 border-b border-card-border">
-                <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">
-                  Rep Firm Assignment
-                </h2>
-                <p className="text-sm text-foreground opacity-70">
-                  Select rep firms this director can include in reports
-                </p>
+              <div className="px-6 py-4 border-b border-card-border flex justify-between items-start">
+                <div>
+                  <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">
+                    Rep Firm Assignment
+                  </h2>
+                  <p className="text-sm text-foreground opacity-70">
+                    Select rep firms this director can include in reports
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddRepFirm(!showAddRepFirm)}
+                  className="px-3 py-1.5 bg-sonance-green text-white rounded-lg hover:bg-sonance-green/90 transition-colors font-semibold uppercase tracking-wide text-xs"
+                >
+                  + Add Rep Firm
+                </button>
               </div>
               <div className="p-6">
+                {/* Add New Rep Firm Form */}
+                {showAddRepFirm && (
+                  <div className="mb-4 p-4 bg-sonance-blue/5 border border-sonance-blue/20 rounded-lg">
+                    <div className="flex flex-wrap gap-3 items-end">
+                      <div className="flex-1 min-w-[200px]">
+                        <label className="block text-xs font-semibold text-foreground mb-1 uppercase tracking-wide">
+                          Rep Firm Name
+                        </label>
+                        <input
+                          type="text"
+                          value={newRepFirmName}
+                          onChange={(e) => setNewRepFirmName(e.target.value)}
+                          placeholder="e.g., ABC Representatives"
+                          className="w-full px-3 py-2 border-2 border-card-border rounded-lg bg-input-bg text-foreground text-sm focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                        />
+                      </div>
+                      <div className="w-48">
+                        <label className="block text-xs font-semibold text-foreground mb-1 uppercase tracking-wide">
+                          Region (Optional)
+                        </label>
+                        <select
+                          value={newRepFirmRegionId}
+                          onChange={(e) => setNewRepFirmRegionId(e.target.value)}
+                          className="w-full px-3 py-2 border-2 border-card-border rounded-lg bg-input-bg text-foreground text-sm focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                        >
+                          <option value="">-- No Region --</option>
+                          {regions.map((region) => (
+                            <option key={region.id} value={region.id}>
+                              {region.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddRepFirm}
+                        disabled={addingRepFirm || !newRepFirmName.trim()}
+                        className="px-4 py-2 bg-sonance-blue text-white rounded-lg hover:bg-sonance-blue/90 transition-colors font-semibold uppercase tracking-wide text-xs disabled:opacity-50"
+                      >
+                        {addingRepFirm ? 'Adding...' : 'Add'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddRepFirm(false)
+                          setNewRepFirmName('')
+                          setNewRepFirmRegionId('')
+                        }}
+                        className="px-4 py-2 border border-card-border rounded-lg text-foreground hover:bg-muted/50 transition-colors text-xs"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Search */}
                 <input
                   type="text"
@@ -495,15 +626,62 @@ export default function SetupWizardPage() {
 
             {/* Customer Assignment */}
             <div className="bg-card-bg rounded-lg shadow mb-6">
-              <div className="px-6 py-4 border-b border-card-border">
-                <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">
-                  Customer Assignment
-                </h2>
-                <p className="text-sm text-foreground opacity-70">
-                  Select strategic accounts this director manages
-                </p>
+              <div className="px-6 py-4 border-b border-card-border flex justify-between items-start">
+                <div>
+                  <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">
+                    Customer Assignment
+                  </h2>
+                  <p className="text-sm text-foreground opacity-70">
+                    Select strategic accounts this director manages
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddCustomer(!showAddCustomer)}
+                  className="px-3 py-1.5 bg-sonance-green text-white rounded-lg hover:bg-sonance-green/90 transition-colors font-semibold uppercase tracking-wide text-xs"
+                >
+                  + Add Customer
+                </button>
               </div>
               <div className="p-6">
+                {/* Add New Customer Form */}
+                {showAddCustomer && (
+                  <div className="mb-4 p-4 bg-sonance-blue/5 border border-sonance-blue/20 rounded-lg">
+                    <div className="flex flex-wrap gap-3 items-end">
+                      <div className="flex-1 min-w-[200px]">
+                        <label className="block text-xs font-semibold text-foreground mb-1 uppercase tracking-wide">
+                          Customer Name
+                        </label>
+                        <input
+                          type="text"
+                          value={newCustomerName}
+                          onChange={(e) => setNewCustomerName(e.target.value)}
+                          placeholder="e.g., Acme Corporation"
+                          className="w-full px-3 py-2 border-2 border-card-border rounded-lg bg-input-bg text-foreground text-sm focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddCustomer}
+                        disabled={addingCustomer || !newCustomerName.trim()}
+                        className="px-4 py-2 bg-sonance-blue text-white rounded-lg hover:bg-sonance-blue/90 transition-colors font-semibold uppercase tracking-wide text-xs disabled:opacity-50"
+                      >
+                        {addingCustomer ? 'Adding...' : 'Add'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddCustomer(false)
+                          setNewCustomerName('')
+                        }}
+                        className="px-4 py-2 border border-card-border rounded-lg text-foreground hover:bg-muted/50 transition-colors text-xs"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Search */}
                 <input
                   type="text"
