@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const includeParent = searchParams.get('includeParent') === 'true'
+
+    const selectQuery = includeParent
+      ? '*, parent:regions!parent_id(id, name)'
+      : '*'
+
     const { data, error } = await supabase
       .from('regions')
-      .select('*')
+      .select(selectQuery)
       .order('name')
 
     if (error) throw error
@@ -20,7 +27,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name } = body
+    const { name, parent_id } = body
 
     if (!name || !name.trim()) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
@@ -28,8 +35,11 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase
       .from('regions')
-      .insert({ name: name.trim() })
-      .select()
+      .insert({
+        name: name.trim(),
+        parent_id: parent_id || null
+      })
+      .select('*, parent:regions!parent_id(id, name)')
       .single()
 
     if (error) {
