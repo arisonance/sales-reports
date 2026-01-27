@@ -1,16 +1,19 @@
 -- Admin Management Tables Migration
 -- Run this in Supabase Dashboard → SQL Editor
 
+-- Ensure uuid extension exists
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Create regions table
-CREATE TABLE regions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS regions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL UNIQUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Create rep_firms_master table (master list for dropdown)
-CREATE TABLE rep_firms_master (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS rep_firms_master (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   region_id UUID REFERENCES regions(id) ON DELETE SET NULL,
   active BOOLEAN DEFAULT true,
