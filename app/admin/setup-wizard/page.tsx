@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AdminNav from '@/components/admin/AdminNav'
 import { Director, Region, RepFirmMaster, CustomerMaster } from '@/lib/supabase'
+import { fetchWithRetry } from '@/lib/fetchWithRetry'
 
 interface DirectorSetup {
   director: Director
@@ -52,6 +53,8 @@ export default function SetupWizardPage() {
   const [loading, setLoading] = useState(true)
   const [loadingSetup, setLoadingSetup] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [loadErrors, setLoadErrors] = useState<Record<string, string>>({})
+  const [retrying, setRetrying] = useState<Record<string, boolean>>({})
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -64,37 +67,66 @@ export default function SetupWizardPage() {
     fetchAllData()
   }, [router])
 
-  const fetchAllData = async () => {
-    try {
-      setLoading(true)
-      const [directorsRes, regionsRes, repFirmsRes, customersRes] = await Promise.all([
-        fetch('/api/directors'),
-        fetch('/api/regions'),
-        fetch('/api/rep-firms'),
-        fetch('/api/customers'),
-      ])
-
-      if (!directorsRes.ok || !regionsRes.ok || !repFirmsRes.ok || !customersRes.ok) {
-        throw new Error('Failed to fetch data')
-      }
-
-      const [directorsData, regionsData, repFirmsData, customersData] = await Promise.all([
-        directorsRes.json(),
-        regionsRes.json(),
-        repFirmsRes.json(),
-        customersRes.json(),
-      ])
-
-      setDirectors(directorsData)
-      setRegions(regionsData)
-      setRepFirms(repFirmsData)
-      setCustomers(customersData)
-    } catch (err) {
-      console.error('Error fetching data:', err)
-      setError('Failed to load data')
-    } finally {
-      setLoading(false)
+  const fetchEndpoint = async <T,>(
+    key: string,
+    url: string,
+    setter: (data: T) => void,
+  ): Promise<{ key: string; error?: string }> => {
+    const result = await fetchWithRetry<T>(url)
+    if (result.success) {
+      setter(result.data!)
+      return { key }
     }
+    return { key, error: result.error }
+  }
+
+  const fetchAllData = async () => {
+    setLoading(true)
+    setLoadErrors({})
+
+    const results = await Promise.all([
+      fetchEndpoint<Director[]>('Directors', '/api/directors', setDirectors),
+      fetchEndpoint<Region[]>('Regions', '/api/regions', setRegions),
+      fetchEndpoint<RepFirmMaster[]>('Rep Firms', '/api/rep-firms', setRepFirms),
+      fetchEndpoint<CustomerMaster[]>('Customers', '/api/customers', setCustomers),
+    ])
+
+    const errors: Record<string, string> = {}
+    for (const r of results) {
+      if (r.error) errors[r.key] = r.error
+    }
+    setLoadErrors(errors)
+    setLoading(false)
+  }
+
+  const retryEndpoint = async (key: string) => {
+    const config: Record<string, { url: string; setter: (data: unknown) => void }> = {
+      Directors: { url: '/api/directors', setter: (d) => setDirectors(d as Director[]) },
+      Regions: { url: '/api/regions', setter: (d) => setRegions(d as Region[]) },
+      'Rep Firms': { url: '/api/rep-firms', setter: (d) => setRepFirms(d as RepFirmMaster[]) },
+      Customers: { url: '/api/customers', setter: (d) => setCustomers(d as CustomerMaster[]) },
+    }
+    const c = config[key]
+    if (!c) return
+
+    setRetrying(prev => ({ ...prev, [key]: true }))
+    const result = await fetchWithRetry(c.url)
+    if (result.success) {
+      c.setter(result.data)
+      setLoadErrors(prev => {
+        const next = { ...prev }
+        delete next[key]
+        return next
+      })
+    } else {
+      setLoadErrors(prev => ({ ...prev, [key]: result.error || 'Failed' }))
+    }
+    setRetrying(prev => ({ ...prev, [key]: false }))
+  }
+
+  const retryAll = async () => {
+    const keys = Object.keys(loadErrors)
+    await Promise.all(keys.map(k => retryEndpoint(k)))
   }
 
   const handleDirectorChange = async (directorId: string) => {
@@ -358,6 +390,42 @@ export default function SetupWizardPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <AdminNav />
+
+        {Object.keys(loadErrors).length > 0 && (
+          <div className="bg-red-100 border border-red-400 rounded-lg mb-6 overflow-hidden">
+            <div className="px-4 py-3 flex justify-between items-center">
+              <span className="font-semibold text-red-800">
+                Failed to load data
+              </span>
+              <div className="flex items-center gap-2">
+                {Object.keys(loadErrors).length > 1 && (
+                  <button
+                    onClick={retryAll}
+                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-semibold uppercase tracking-wide"
+                  >
+                    Retry All
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="px-4 pb-3 space-y-2">
+              {Object.entries(loadErrors).map(([key, msg]) => (
+                <div key={key} className="flex justify-between items-center text-sm">
+                  <span className="text-red-700">
+                    <span className="font-semibold">{key}:</span> {msg}
+                  </span>
+                  <button
+                    onClick={() => retryEndpoint(key)}
+                    disabled={retrying[key]}
+                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 text-xs font-semibold uppercase tracking-wide"
+                  >
+                    {retrying[key] ? 'Retrying...' : 'Retry'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
