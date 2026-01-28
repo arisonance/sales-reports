@@ -1,17 +1,9 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
-let _supabase: SupabaseClient | null = null
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
 
-export const supabase = new Proxy({} as SupabaseClient, {
-  get(_target, prop) {
-    if (!_supabase) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      _supabase = createClient(supabaseUrl, supabaseAnonKey)
-    }
-    return (_supabase as Record<string, unknown>)[prop as string]
-  }
-})
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Types for our database tables
 export interface Region {
