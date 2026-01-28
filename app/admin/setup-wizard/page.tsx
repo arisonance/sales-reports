@@ -35,6 +35,10 @@ export default function SetupWizardPage() {
   const [customerSearch, setCustomerSearch] = useState('')
 
   // Add new item forms
+  const [showAddRegion, setShowAddRegion] = useState(false)
+  const [newRegionName, setNewRegionName] = useState('')
+  const [addingRegion, setAddingRegion] = useState(false)
+
   const [showAddRepFirm, setShowAddRepFirm] = useState(false)
   const [newRepFirmName, setNewRepFirmName] = useState('')
   const [newRepFirmRegionId, setNewRepFirmRegionId] = useState('')
@@ -163,6 +167,33 @@ export default function SetupWizardPage() {
         ? prev.filter(id => id !== customerId)
         : [...prev, customerId]
     )
+  }
+
+  const handleAddRegion = async () => {
+    if (!newRegionName.trim()) return
+
+    setAddingRegion(true)
+    try {
+      const res = await fetch('/api/regions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newRegionName.trim() }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to add region')
+      }
+
+      const newRegion = await res.json()
+      setRegions(prev => [...prev, newRegion].sort((a, b) => a.name.localeCompare(b.name)))
+      setNewRegionName('')
+      setShowAddRegion(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add region')
+    } finally {
+      setAddingRegion(false)
+    }
   }
 
   const handleAddRepFirm = async () => {
@@ -386,15 +417,61 @@ export default function SetupWizardPage() {
           <>
             {/* Region Assignment */}
             <div className="bg-card-bg rounded-lg shadow mb-6">
-              <div className="px-6 py-4 border-b border-card-border">
-                <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">
-                  Region Assignment
-                </h2>
-                <p className="text-sm text-foreground opacity-70">
-                  Assign primary and additional regions
-                </p>
+              <div className="px-6 py-4 border-b border-card-border flex justify-between items-start">
+                <div>
+                  <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">
+                    Region Assignment
+                  </h2>
+                  <p className="text-sm text-foreground opacity-70">
+                    Assign primary and additional regions
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddRegion(!showAddRegion)}
+                  className="px-3 py-1.5 bg-sonance-green text-white rounded-lg hover:bg-sonance-green/90 transition-colors font-semibold uppercase tracking-wide text-xs"
+                >
+                  + Add Region
+                </button>
               </div>
               <div className="p-6 space-y-6">
+                {/* Add New Region Form */}
+                {showAddRegion && (
+                  <div className="p-4 bg-sonance-blue/5 border border-sonance-blue/20 rounded-lg">
+                    <div className="flex flex-wrap gap-3 items-end">
+                      <div className="flex-1 min-w-[200px]">
+                        <label className="block text-xs font-semibold text-foreground mb-1 uppercase tracking-wide">
+                          Region Name
+                        </label>
+                        <input
+                          type="text"
+                          value={newRegionName}
+                          onChange={(e) => setNewRegionName(e.target.value)}
+                          placeholder="e.g., Northeast"
+                          className="w-full px-3 py-2 border-2 border-card-border rounded-lg bg-input-bg text-foreground text-sm focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddRegion}
+                        disabled={addingRegion || !newRegionName.trim()}
+                        className="px-4 py-2 bg-sonance-blue text-white rounded-lg hover:bg-sonance-blue/90 transition-colors font-semibold uppercase tracking-wide text-xs disabled:opacity-50"
+                      >
+                        {addingRegion ? 'Adding...' : 'Add'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddRegion(false)
+                          setNewRegionName('')
+                        }}
+                        className="px-4 py-2 border border-card-border rounded-lg text-foreground hover:bg-muted/50 transition-colors text-xs"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {/* Primary Region */}
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2 uppercase tracking-wide">
