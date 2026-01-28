@@ -180,6 +180,12 @@ export default function ViewReport() {
               &larr; Back to Dashboard
             </Link>
           </div>
+          <Link
+              href={`/admin/report/${params.id}/edit`}
+              className="px-4 py-2 border-2 border-sonance-blue text-sonance-blue rounded-lg hover:bg-sonance-blue hover:text-white transition-colors text-sm font-semibold uppercase tracking-wide"
+            >
+              Edit Report
+            </Link>
           <button className="px-4 py-2 bg-sonance-blue text-white rounded-lg hover:bg-sonance-blue/90 transition-colors text-sm font-semibold uppercase tracking-wide">
             Export PDF
           </button>

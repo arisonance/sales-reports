@@ -1,0 +1,181 @@
+import { NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
+
+// GET - Get complete setup for a director
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+
+    // Get director info
+    const { data: director, error: directorError } = await supabase
+      .from('directors')
+      .select('*, regions(id, name)')
+      .eq('id', id)
+      .single()
+
+    if (directorError) {
+      if (directorError.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Director not found' }, { status: 404 })
+      }
+      throw directorError
+    }
+
+    // Get region access
+    const { data: regionAccess, error: regionError } = await supabase
+      .from('director_region_access')
+      .select('region_id, is_primary, regions(id, name)')
+      .eq('director_id', id)
+
+    if (regionError) throw regionError
+
+    // Get rep access
+    const { data: repAccess, error: repError } = await supabase
+      .from('director_rep_access')
+      .select('rep_firm_id, rep_firms_master(id, name)')
+      .eq('director_id', id)
+
+    if (repError) throw repError
+
+    // Get customer access
+    const { data: customerAccess, error: customerError } = await supabase
+      .from('director_customer_access')
+      .select('customer_id, customers_master(id, name)')
+      .eq('director_id', id)
+
+    if (customerError) throw customerError
+
+    // Find primary region
+    const primaryRegion = regionAccess?.find(r => r.is_primary)
+    const additionalRegions = regionAccess?.filter(r => !r.is_primary) || []
+
+    return NextResponse.json({
+      director,
+      primary_region_id: primaryRegion?.region_id || director.region_id || null,
+      additional_region_ids: additionalRegions.map(r => r.region_id),
+      rep_firm_ids: repAccess?.map(r => r.rep_firm_id) || [],
+      customer_ids: customerAccess?.map(c => c.customer_id) || [],
+    })
+  } catch (error) {
+    console.error('Error fetching director setup:', error)
+    return NextResponse.json({ error: 'Failed to fetch director setup' }, { status: 500 })
+  }
+}
+
+// PUT - Save complete setup for a director
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const body = await request.json()
+    const {
+      primary_region_id,
+      additional_region_ids = [],
+      rep_firm_ids = [],
+      customer_ids = []
+    } = body
+
+    // Verify director exists
+    const { data: director, error: checkError } = await supabase
+      .from('directors')
+      .select('id')
+      .eq('id', id)
+      .single()
+
+    if (checkError || !director) {
+      return NextResponse.json({ error: 'Director not found' }, { status: 404 })
+    }
+
+    // Update director's primary region_id (for legacy compatibility)
+    if (primary_region_id) {
+      const { error: updateError } = await supabase
+        .from('directors')
+        .update({ region_id: primary_region_id })
+        .eq('id', id)
+
+      if (updateError) throw updateError
+    }
+
+    // Clear and replace region access
+    await supabase
+      .from('director_region_access')
+      .delete()
+      .eq('director_id', id)
+
+    const regionEntries = []
+    if (primary_region_id) {
+      regionEntries.push({
+        director_id: id,
+        region_id: primary_region_id,
+        is_primary: true
+      })
+    }
+    for (const regionId of additional_region_ids) {
+      if (regionId !== primary_region_id) {
+        regionEntries.push({
+          director_id: id,
+          region_id: regionId,
+          is_primary: false
+        })
+      }
+    }
+
+    if (regionEntries.length > 0) {
+      const { error: regionError } = await supabase
+        .from('director_region_access')
+        .insert(regionEntries)
+
+      if (regionError) throw regionError
+    }
+
+    // Clear and replace rep access
+    await supabase
+      .from('director_rep_access')
+      .delete()
+      .eq('director_id', id)
+
+    if (rep_firm_ids.length > 0) {
+      const repEntries = rep_firm_ids.map((repId: string) => ({
+        director_id: id,
+        rep_firm_id: repId
+      }))
+
+      const { error: repError } = await supabase
+        .from('director_rep_access')
+        .insert(repEntries)
+
+      if (repError) throw repError
+    }
+
+    // Clear and replace customer access
+    await supabase
+      .from('director_customer_access')
+      .delete()
+      .eq('director_id', id)
+
+    if (customer_ids.length > 0) {
+      const customerEntries = customer_ids.map((customerId: string) => ({
+        director_id: id,
+        customer_id: customerId
+      }))
+
+      const { error: customerError } = await supabase
+        .from('director_customer_access')
+        .insert(customerEntries)
+
+      if (customerError) throw customerError
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Director setup saved successfully'
+    })
+  } catch (error) {
+    console.error('Error saving director setup:', error)
+    return NextResponse.json({ error: 'Failed to save director setup' }, { status: 500 })
+  }
+}

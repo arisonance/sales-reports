@@ -7,7 +7,9 @@ const navItems = [
   { href: '/admin/manage', label: 'Overview' },
   { href: '/admin/manage/regions', label: 'Regions' },
   { href: '/admin/manage/rep-firms', label: 'Rep Firms' },
+  { href: '/admin/manage/customers', label: 'Customers' },
   { href: '/admin/manage/directors', label: 'Directors' },
+  { href: '/admin/setup-wizard', label: 'Setup Wizard', highlight: true },
 ]
 
 export default function AdminNav() {
@@ -27,6 +29,8 @@ export default function AdminNav() {
               className={`px-4 py-2 rounded-lg text-sm font-semibold uppercase tracking-wide transition-colors ${
                 isActive
                   ? 'bg-sonance-blue text-white'
+                  : item.highlight
+                  ? 'bg-sonance-green/20 text-sonance-green hover:bg-sonance-green/30'
                   : 'text-foreground hover:bg-muted/50'
               }`}
             >

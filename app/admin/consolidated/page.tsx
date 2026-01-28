@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { pdf } from '@react-pdf/renderer'
+import dynamic from 'next/dynamic'
+
+// Dynamically import chart components to avoid SSR issues
+const RegionalBarChart = dynamic(() => import('@/components/charts/RegionalBarChart'), { ssr: false })
+const ChartWrapper = dynamic(() => import('@/components/charts/ChartWrapper'), { ssr: false })
 
 interface ReportInfo {
   id: string
@@ -766,7 +771,15 @@ export default function ConsolidatedReport() {
                 <div className="bg-sonance-green rounded-lg p-4 text-white">
                   <p className="text-sm opacity-80 uppercase tracking-wide">% to Goal</p>
                   <p className="text-2xl font-bold">{overallPercentToGoal}%</p>
-                  <p className="text-xs opacity-60">
+                  <div className="mt-2">
+                    <div className="relative h-2 bg-white/30 rounded-full overflow-hidden">
+                      <div
+                        className="absolute h-full bg-white rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(overallPercentToGoal, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs opacity-60 mt-1">
                     {overallPercentToGoal >= 100 ? 'On track!' : `${100 - overallPercentToGoal}% behind`}
                   </p>
                 </div>
@@ -782,6 +795,16 @@ export default function ConsolidatedReport() {
                 </div>
               </div>
             </div>
+
+            {/* Regional Performance Chart */}
+            {data.regions.length > 0 && (
+              <ChartWrapper
+                title="Sales vs Goal by Region"
+                subtitle="Color indicates goal achievement: green (100%+), blue (90-99%), red (<90%)"
+              >
+                <RegionalBarChart data={data.regions} />
+              </ChartWrapper>
+            )}
 
             {/* Regional Breakdown */}
             <div className="bg-card-bg rounded-lg shadow p-6">

@@ -186,6 +186,19 @@ export default function AdminDashboard() {
             <p className="text-2xl font-bold text-sonance-green">
               {reports.filter(r => r.status === 'submitted').length}
             </p>
+            {reports.length > 0 && (
+              <div className="mt-2">
+                <div className="relative h-2 bg-muted/30 rounded-full overflow-hidden">
+                  <div
+                    className="absolute h-full bg-sonance-green rounded-full transition-all duration-500"
+                    style={{ width: `${Math.round((reports.filter(r => r.status === 'submitted').length / reports.length) * 100)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-foreground opacity-50 mt-1">
+                  {Math.round((reports.filter(r => r.status === 'submitted').length / reports.length) * 100)}% submission rate
+                </p>
+              </div>
+            )}
           </div>
           <div className="bg-card-bg rounded-lg shadow p-4 border-l-4 border-card-border">
             <p className="text-sm text-foreground opacity-70 uppercase tracking-wide">Drafts</p>

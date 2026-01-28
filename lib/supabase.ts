@@ -9,7 +9,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export interface Region {
   id: string
   name: string
+  parent_id: string | null
   created_at: string
+  parent?: Region // For joined queries
+  children?: Region[] // For tree building
 }
 
 export interface RepFirmMaster {
@@ -28,7 +31,42 @@ export interface Director {
   region: string // Legacy text field
   region_id: string | null
   created_at: string
+  regions?: Region // For joined queries (primary region)
+  director_region_access?: DirectorRegionAccess[] // All accessible regions
+  director_rep_access?: DirectorRepAccess[] // Assigned rep firms
+  director_customer_access?: DirectorCustomerAccess[] // Assigned customers
+}
+
+export interface DirectorRegionAccess {
+  id: string
+  director_id: string
+  region_id: string
+  is_primary: boolean
+  created_at: string
   regions?: Region // For joined queries
+}
+
+export interface CustomerMaster {
+  id: string
+  name: string
+  active: boolean
+  created_at: string
+}
+
+export interface DirectorCustomerAccess {
+  id: string
+  director_id: string
+  customer_id: string
+  created_at: string
+  customers_master?: CustomerMaster // For joined queries
+}
+
+export interface DirectorRepAccess {
+  id: string
+  director_id: string
+  rep_firm_id: string
+  created_at: string
+  rep_firms_master?: RepFirmMaster // For joined queries
 }
 
 export interface Report {
@@ -109,6 +147,15 @@ export interface FollowUps {
   id: string
   report_id: string
   content: string
+}
+
+export interface ReportEditHistory {
+  id: string
+  report_id: string
+  edited_by: string
+  edited_at: string
+  changes: Record<string, { old: unknown; new: unknown }>
+  edit_reason: string | null
 }
 
 // Full report with all related data

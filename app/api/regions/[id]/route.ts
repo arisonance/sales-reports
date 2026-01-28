@@ -10,7 +10,7 @@ export async function GET(
 
     const { data, error } = await supabase
       .from('regions')
-      .select('*')
+      .select('*, parent:regions!parent_id(id, name)')
       .eq('id', id)
       .single()
 
@@ -35,17 +35,25 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { name } = body
+    const { name, parent_id } = body
 
     if (!name || !name.trim()) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
     }
 
+    // Prevent circular reference (can't be parent of itself)
+    if (parent_id === id) {
+      return NextResponse.json({ error: 'Region cannot be its own parent' }, { status: 400 })
+    }
+
     const { data, error } = await supabase
       .from('regions')
-      .update({ name: name.trim() })
+      .update({
+        name: name.trim(),
+        parent_id: parent_id || null
+      })
       .eq('id', id)
-      .select()
+      .select('*, parent:regions!parent_id(id, name)')
       .single()
 
     if (error) {
