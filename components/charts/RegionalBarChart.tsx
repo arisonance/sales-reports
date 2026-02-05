@@ -25,6 +25,43 @@ interface RegionalBarChartProps {
   data: RegionData[]
 }
 
+interface ChartDataItem {
+  name: string
+  director: string
+  sales: number
+  goal: number
+  percentToGoal: number
+}
+
+// Custom tooltip - defined outside component to avoid recreation on each render
+function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: ChartDataItem }> }) {
+  if (active && payload && payload.length) {
+    const item = payload[0].payload
+    return (
+      <div className="bg-card-bg border border-card-border rounded-lg shadow-lg p-3">
+        <p className="font-semibold text-foreground">{item.name}</p>
+        <p className="text-sm text-foreground opacity-70">{item.director}</p>
+        <div className="mt-2 space-y-1 text-sm">
+          <p className="text-sonance-blue">
+            Sales: {formatCurrency(item.sales)}
+          </p>
+          <p className="text-foreground opacity-60">
+            Goal: {formatCurrency(item.goal)}
+          </p>
+          <p className={`font-semibold ${
+            item.percentToGoal >= 100 ? 'text-sonance-green' :
+            item.percentToGoal >= 90 ? 'text-sonance-blue' :
+            'text-red-500'
+          }`}>
+            {item.percentToGoal}% to goal
+          </p>
+        </div>
+      </div>
+    )
+  }
+  return null
+}
+
 export default function RegionalBarChart({ data }: RegionalBarChartProps) {
   // Transform data for the chart
   const chartData = data.map(d => ({
@@ -34,35 +71,6 @@ export default function RegionalBarChart({ data }: RegionalBarChartProps) {
     goal: d.monthlyGoal,
     percentToGoal: d.percentToGoal,
   }))
-
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: typeof chartData[0] }> }) => {
-    if (active && payload && payload.length) {
-      const item = payload[0].payload
-      return (
-        <div className="bg-card-bg border border-card-border rounded-lg shadow-lg p-3">
-          <p className="font-semibold text-foreground">{item.name}</p>
-          <p className="text-sm text-foreground opacity-70">{item.director}</p>
-          <div className="mt-2 space-y-1 text-sm">
-            <p className="text-sonance-blue">
-              Sales: {formatCurrency(item.sales)}
-            </p>
-            <p className="text-foreground opacity-60">
-              Goal: {formatCurrency(item.goal)}
-            </p>
-            <p className={`font-semibold ${
-              item.percentToGoal >= 100 ? 'text-sonance-green' :
-              item.percentToGoal >= 90 ? 'text-sonance-blue' :
-              'text-red-500'
-            }`}>
-              {item.percentToGoal}% to goal
-            </p>
-          </div>
-        </div>
-      )
-    }
-    return null
-  }
 
   return (
     <div className="w-full h-[300px]">
