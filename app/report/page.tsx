@@ -439,7 +439,7 @@ export default function ReportPage() {
       case 'wins':
         return <WinsHighlightsTab data={reportData} updateData={updateReportData} />
       case 'sales':
-        return <SalesDataTab data={reportData} updateData={updateReportData} />
+        return <SalesDataTab data={reportData} updateData={updateReportData} directorId={reportData.directorId} />
       case 'competition':
         return <CompetitionTab data={reportData} updateData={updateReportData} />
       case 'marketing':

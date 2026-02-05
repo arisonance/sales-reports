@@ -7,15 +7,19 @@ import { RepFirmMaster } from '@/lib/supabase'
 interface Props {
   data: ReportData
   updateData: (updates: Partial<ReportData>) => void
+  directorId?: string
 }
 
-export default function SalesDataTab({ data, updateData }: Props) {
+export default function SalesDataTab({ data, updateData, directorId }: Props) {
   const [repFirmOptions, setRepFirmOptions] = useState<RepFirmMaster[]>([])
 
   useEffect(() => {
     const fetchRepFirmOptions = async () => {
+      if (!directorId) return
+
       try {
-        const res = await fetch('/api/rep-firms')
+        // Fetch only rep firms assigned to this director in the setup wizard
+        const res = await fetch(`/api/directors/${directorId}/rep-firms`)
         if (res.ok) {
           const data = await res.json()
           setRepFirmOptions(data)
@@ -25,7 +29,7 @@ export default function SalesDataTab({ data, updateData }: Props) {
       }
     }
     fetchRepFirmOptions()
-  }, [])
+  }, [directorId])
 
   const addRepFirm = () => {
     const newRepFirm = {
