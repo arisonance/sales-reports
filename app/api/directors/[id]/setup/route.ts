@@ -47,6 +47,14 @@ export async function GET(
 
     if (customerError) throw customerError
 
+    // Get channel configuration
+    const { data: channelConfig, error: channelError } = await supabase
+      .from('director_channel_config')
+      .select('channel_type')
+      .eq('director_id', id)
+
+    if (channelError) throw channelError
+
     // Find primary region
     const primaryRegion = regionAccess?.find(r => r.is_primary)
     const additionalRegions = regionAccess?.filter(r => !r.is_primary) || []
@@ -57,6 +65,8 @@ export async function GET(
       additional_region_ids: additionalRegions.map(r => r.region_id),
       rep_firm_ids: repAccess?.map(r => r.rep_firm_id) || [],
       customer_ids: customerAccess?.map(c => c.customer_id) || [],
+      channel_types: channelConfig?.map(c => c.channel_type) || [],
+      uses_direct_customers: director.uses_direct_customers || false,
     })
   } catch (error) {
     console.error('Error fetching director setup:', error)
@@ -76,7 +86,9 @@ export async function PUT(
       primary_region_id,
       additional_region_ids = [],
       rep_firm_ids = [],
-      customer_ids = []
+      customer_ids = [],
+      channel_types = [],
+      uses_direct_customers = false
     } = body
 
     // Verify director exists
@@ -90,15 +102,16 @@ export async function PUT(
       return NextResponse.json({ error: 'Director not found' }, { status: 404 })
     }
 
-    // Update director's primary region_id (for legacy compatibility)
-    if (primary_region_id) {
-      const { error: updateError } = await supabase
-        .from('directors')
-        .update({ region_id: primary_region_id })
-        .eq('id', id)
+    // Update director's primary region_id and uses_direct_customers
+    const { error: updateError } = await supabase
+      .from('directors')
+      .update({
+        region_id: primary_region_id || null,
+        uses_direct_customers
+      })
+      .eq('id', id)
 
-      if (updateError) throw updateError
-    }
+    if (updateError) throw updateError
 
     // Clear and replace region access
     await supabase
@@ -168,6 +181,25 @@ export async function PUT(
         .insert(customerEntries)
 
       if (customerError) throw customerError
+    }
+
+    // Clear and replace channel configuration
+    await supabase
+      .from('director_channel_config')
+      .delete()
+      .eq('director_id', id)
+
+    if (channel_types.length > 0) {
+      const channelEntries = channel_types.map((channelType: string) => ({
+        director_id: id,
+        channel_type: channelType
+      }))
+
+      const { error: channelError } = await supabase
+        .from('director_channel_config')
+        .insert(channelEntries)
+
+      if (channelError) throw channelError
     }
 
     return NextResponse.json({

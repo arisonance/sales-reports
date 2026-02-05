@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AdminNav from '@/components/admin/AdminNav'
 import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal'
-import { Director, Region, RepFirmMaster, CustomerMaster } from '@/lib/supabase'
+import { Director, Region, RepFirmMaster, CustomerMaster, SalesEntityType } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/fetchWithRetry'
 
 type DeleteType = 'director' | 'region' | 'rep_firm' | 'customer'
@@ -21,7 +21,16 @@ interface DirectorSetup {
   additional_region_ids: string[]
   rep_firm_ids: string[]
   customer_ids: string[]
+  channel_types: SalesEntityType[]
+  uses_direct_customers: boolean
 }
+
+// Channel type definitions for the UI
+const CHANNEL_CONFIG = [
+  { id: 'rep_firm' as SalesEntityType, label: 'Rep Firms', description: 'Independent sales representatives (domestic)' },
+  { id: 'distributor' as SalesEntityType, label: 'Distributors', description: 'Distribution partners (international)' },
+  { id: 'specialty_account' as SalesEntityType, label: 'Specialty Accounts', description: 'Strategic specialty partners' },
+] as const
 
 export default function SetupWizardPage() {
   const router = useRouter()
@@ -39,6 +48,10 @@ export default function SetupWizardPage() {
   const [repFirmIds, setRepFirmIds] = useState<string[]>([])
   const [customerIds, setCustomerIds] = useState<string[]>([])
 
+  // Channel configuration state
+  const [channelTypes, setChannelTypes] = useState<SalesEntityType[]>([])
+  const [usesDirectCustomers, setUsesDirectCustomers] = useState(false)
+
   // Search filters
   const [repFirmSearch, setRepFirmSearch] = useState('')
   const [customerSearch, setCustomerSearch] = useState('')
@@ -51,6 +64,7 @@ export default function SetupWizardPage() {
   const [showAddRepFirm, setShowAddRepFirm] = useState(false)
   const [newRepFirmName, setNewRepFirmName] = useState('')
   const [newRepFirmRegionId, setNewRepFirmRegionId] = useState('')
+  const [newRepFirmEntityType, setNewRepFirmEntityType] = useState<SalesEntityType>('rep_firm')
   const [addingRepFirm, setAddingRepFirm] = useState(false)
 
   const [showAddCustomer, setShowAddCustomer] = useState(false)
@@ -162,6 +176,8 @@ export default function SetupWizardPage() {
       setAdditionalRegionIds([])
       setRepFirmIds([])
       setCustomerIds([])
+      setChannelTypes([])
+      setUsesDirectCustomers(false)
       return
     }
 
@@ -175,6 +191,8 @@ export default function SetupWizardPage() {
       setAdditionalRegionIds(data.additional_region_ids || [])
       setRepFirmIds(data.rep_firm_ids || [])
       setCustomerIds(data.customer_ids || [])
+      setChannelTypes(data.channel_types || [])
+      setUsesDirectCustomers(data.uses_direct_customers || false)
     } catch (err) {
       console.error('Error fetching director setup:', err)
       setError('Failed to load director setup')
@@ -199,27 +217,19 @@ export default function SetupWizardPage() {
     )
   }
 
-  const handleSelectAllRepFirmsFromRegion = (regionId: string) => {
-    const regionRepFirmIds = repFirms
-      .filter(rf => rf.region_id === regionId)
-      .map(rf => rf.id)
-
-    const allSelected = regionRepFirmIds.every(id => repFirmIds.includes(id))
-
-    if (allSelected) {
-      // Deselect all from this region
-      setRepFirmIds(prev => prev.filter(id => !regionRepFirmIds.includes(id)))
-    } else {
-      // Select all from this region
-      setRepFirmIds(prev => [...new Set([...prev, ...regionRepFirmIds])])
-    }
-  }
-
   const handleCustomerToggle = (customerId: string) => {
     setCustomerIds(prev =>
       prev.includes(customerId)
         ? prev.filter(id => id !== customerId)
         : [...prev, customerId]
+    )
+  }
+
+  const handleChannelTypeToggle = (channelType: SalesEntityType) => {
+    setChannelTypes(prev =>
+      prev.includes(channelType)
+        ? prev.filter(c => c !== channelType)
+        : [...prev, channelType]
     )
   }
 
@@ -250,7 +260,7 @@ export default function SetupWizardPage() {
     }
   }
 
-  const handleAddRepFirm = async () => {
+  const handleAddRepFirm = async (entityType: SalesEntityType = newRepFirmEntityType) => {
     if (!newRepFirmName.trim()) return
 
     setAddingRepFirm(true)
@@ -261,19 +271,21 @@ export default function SetupWizardPage() {
         body: JSON.stringify({
           name: newRepFirmName.trim(),
           region_id: newRepFirmRegionId || null,
+          entity_type: entityType,
         }),
       })
 
-      if (!res.ok) throw new Error('Failed to add rep firm')
+      if (!res.ok) throw new Error('Failed to add entity')
 
-      const newRepFirm = await res.json()
-      setRepFirms(prev => [...prev, newRepFirm])
-      setRepFirmIds(prev => [...prev, newRepFirm.id]) // Auto-select the new one
+      const newEntity = await res.json()
+      setRepFirms(prev => [...prev, newEntity])
+      setRepFirmIds(prev => [...prev, newEntity.id]) // Auto-select the new one
       setNewRepFirmName('')
       setNewRepFirmRegionId('')
+      setNewRepFirmEntityType('rep_firm')
       setShowAddRepFirm(false)
     } catch (err) {
-      setError('Failed to add rep firm')
+      setError('Failed to add entity')
     } finally {
       setAddingRepFirm(false)
     }
@@ -457,6 +469,12 @@ export default function SetupWizardPage() {
       return
     }
 
+    // Validate at least one channel type is selected
+    if (channelTypes.length === 0 && !usesDirectCustomers) {
+      setError('Please select at least one sales channel type')
+      return
+    }
+
     setError('')
     setSuccess('')
     setSaving(true)
@@ -469,7 +487,9 @@ export default function SetupWizardPage() {
           primary_region_id: primaryRegionId,
           additional_region_ids: additionalRegionIds,
           rep_firm_ids: repFirmIds,
-          customer_ids: customerIds,
+          customer_ids: usesDirectCustomers ? customerIds : [],
+          channel_types: channelTypes,
+          uses_direct_customers: usesDirectCustomers,
         }),
       })
 
@@ -486,22 +506,7 @@ export default function SetupWizardPage() {
     }
   }
 
-  // Group rep firms by region for display
-  const repFirmsByRegion = regions.reduce((acc, region) => {
-    const regionRepFirms = repFirms.filter(rf => rf.region_id === region.id)
-    if (regionRepFirms.length > 0) {
-      acc[region.id] = {
-        region,
-        repFirms: regionRepFirms,
-      }
-    }
-    return acc
-  }, {} as Record<string, { region: Region; repFirms: RepFirmMaster[] }>)
-
-  // Rep firms without a region
-  const unassignedRepFirms = repFirms.filter(rf => !rf.region_id)
-
-  // Filter rep firms by search
+  // Filter entities by search
   const filterRepFirms = (firms: RepFirmMaster[]) => {
     if (!repFirmSearch) return firms
     return firms.filter(rf =>
@@ -514,8 +519,16 @@ export default function SetupWizardPage() {
     !customerSearch || c.name.toLowerCase().includes(customerSearch.toLowerCase())
   )
 
-  // Get selected regions for highlighting
-  const selectedRegionIds = [primaryRegionId, ...additionalRegionIds].filter(Boolean)
+  // Filter entities by type
+  const getEntitiesByType = (entityType: SalesEntityType) => {
+    return repFirms.filter(rf => rf.entity_type === entityType)
+  }
+
+  // Get entity type label
+  const getEntityTypeLabel = (entityType: SalesEntityType) => {
+    const config = CHANNEL_CONFIG.find(c => c.id === entityType)
+    return config?.label || entityType
+  }
 
   if (loading) {
     return (
@@ -722,6 +735,71 @@ export default function SetupWizardPage() {
           </div>
         ) : selectedDirectorId ? (
           <>
+            {/* Sales Channel Configuration */}
+            <div className="bg-card-bg rounded-lg shadow mb-6">
+              <div className="px-6 py-4 border-b border-card-border">
+                <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">
+                  Sales Channel Configuration
+                </h2>
+                <p className="text-sm text-foreground opacity-70">
+                  Select which sales channels this director manages
+                </p>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {CHANNEL_CONFIG.map((channel) => (
+                    <label
+                      key={channel.id}
+                      className={`
+                        flex flex-col p-4 border-2 rounded-lg cursor-pointer transition-all
+                        ${channelTypes.includes(channel.id)
+                          ? 'border-sonance-blue bg-sonance-blue/5'
+                          : 'border-card-border hover:border-sonance-blue/50'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <input
+                          type="checkbox"
+                          checked={channelTypes.includes(channel.id)}
+                          onChange={() => handleChannelTypeToggle(channel.id)}
+                          className="w-5 h-5 rounded border-card-border text-sonance-blue focus:ring-sonance-blue"
+                        />
+                        <span className="font-semibold text-foreground">{channel.label}</span>
+                      </div>
+                      <span className="text-xs text-foreground opacity-60">{channel.description}</span>
+                    </label>
+                  ))}
+                  {/* Direct Customers - separate flag */}
+                  <label
+                    className={`
+                      flex flex-col p-4 border-2 rounded-lg cursor-pointer transition-all
+                      ${usesDirectCustomers
+                        ? 'border-sonance-blue bg-sonance-blue/5'
+                        : 'border-card-border hover:border-sonance-blue/50'
+                      }
+                    `}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <input
+                        type="checkbox"
+                        checked={usesDirectCustomers}
+                        onChange={() => setUsesDirectCustomers(!usesDirectCustomers)}
+                        className="w-5 h-5 rounded border-card-border text-sonance-blue focus:ring-sonance-blue"
+                      />
+                      <span className="font-semibold text-foreground">Direct Customers</span>
+                    </div>
+                    <span className="text-xs text-foreground opacity-60">End customers managed directly</span>
+                  </label>
+                </div>
+                {channelTypes.length === 0 && !usesDirectCustomers && (
+                  <p className="mt-4 text-sm text-amber-600">
+                    Please select at least one sales channel type
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* Region Assignment */}
             <div className="bg-card-bg rounded-lg shadow mb-6">
               <div className="px-6 py-4 border-b border-card-border flex justify-between items-start">
@@ -840,219 +918,157 @@ export default function SetupWizardPage() {
               </div>
             </div>
 
-            {/* Rep Firm Assignment */}
-            <div className="bg-card-bg rounded-lg shadow mb-6">
-              <div className="px-6 py-4 border-b border-card-border flex justify-between items-start">
-                <div>
-                  <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">
-                    Rep Firm Assignment
-                  </h2>
-                  <p className="text-sm text-foreground opacity-70">
-                    Select rep firms this director can include in reports
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAddRepFirm(!showAddRepFirm)}
-                  className="px-3 py-1.5 bg-sonance-green text-white rounded-lg hover:bg-sonance-green/90 transition-colors font-semibold uppercase tracking-wide text-xs"
-                >
-                  + Add Rep Firm
-                </button>
-              </div>
-              <div className="p-6">
-                {/* Add New Rep Firm Form */}
-                {showAddRepFirm && (
-                  <div className="mb-4 p-4 bg-sonance-blue/5 border border-sonance-blue/20 rounded-lg">
-                    <div className="flex flex-wrap gap-3 items-end">
-                      <div className="flex-1 min-w-[200px]">
-                        <label className="block text-xs font-semibold text-foreground mb-1 uppercase tracking-wide">
-                          Rep Firm Name
-                        </label>
-                        <input
-                          type="text"
-                          value={newRepFirmName}
-                          onChange={(e) => setNewRepFirmName(e.target.value)}
-                          placeholder="e.g., ABC Representatives"
-                          className="w-full px-3 py-2 border-2 border-card-border rounded-lg bg-input-bg text-foreground text-sm focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
-                        />
-                      </div>
-                      <div className="w-48">
-                        <label className="block text-xs font-semibold text-foreground mb-1 uppercase tracking-wide">
-                          Region (Optional)
-                        </label>
-                        <select
-                          value={newRepFirmRegionId}
-                          onChange={(e) => setNewRepFirmRegionId(e.target.value)}
-                          className="w-full px-3 py-2 border-2 border-card-border rounded-lg bg-input-bg text-foreground text-sm focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
-                        >
-                          <option value="">-- No Region --</option>
-                          {regions.map((region) => (
-                            <option key={region.id} value={region.id}>
-                              {region.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleAddRepFirm}
-                        disabled={addingRepFirm || !newRepFirmName.trim()}
-                        className="px-4 py-2 bg-sonance-blue text-white rounded-lg hover:bg-sonance-blue/90 transition-colors font-semibold uppercase tracking-wide text-xs disabled:opacity-50"
-                      >
-                        {addingRepFirm ? 'Adding...' : 'Add'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowAddRepFirm(false)
-                          setNewRepFirmName('')
-                          setNewRepFirmRegionId('')
-                        }}
-                        className="px-4 py-2 border border-card-border rounded-lg text-foreground hover:bg-muted/50 transition-colors text-xs"
-                      >
-                        Cancel
-                      </button>
+            {/* Dynamic Entity Sections - One for each enabled channel type */}
+            {channelTypes.map((channelType) => {
+              const typeEntities = getEntitiesByType(channelType)
+              const filteredEntities = filterRepFirms(typeEntities)
+              const selectedCount = typeEntities.filter(e => repFirmIds.includes(e.id)).length
+              const channelLabel = getEntityTypeLabel(channelType)
+
+              return (
+                <div key={channelType} className="bg-card-bg rounded-lg shadow mb-6">
+                  <div className="px-6 py-4 border-b border-card-border flex justify-between items-start">
+                    <div>
+                      <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">
+                        {channelLabel} Assignment
+                      </h2>
+                      <p className="text-sm text-foreground opacity-70">
+                        Select {channelLabel.toLowerCase()} this director manages
+                      </p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewRepFirmEntityType(channelType)
+                        setShowAddRepFirm(!showAddRepFirm)
+                      }}
+                      className="px-3 py-1.5 bg-sonance-green text-white rounded-lg hover:bg-sonance-green/90 transition-colors font-semibold uppercase tracking-wide text-xs"
+                    >
+                      + Add {channelLabel.replace(/s$/, '')}
+                    </button>
                   </div>
-                )}
-
-                {/* Search */}
-                <input
-                  type="text"
-                  placeholder="Search rep firms..."
-                  value={repFirmSearch}
-                  onChange={(e) => setRepFirmSearch(e.target.value)}
-                  className="w-full max-w-md px-4 py-2 mb-4 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
-                />
-
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {/* Rep firms grouped by region */}
-                  {Object.entries(repFirmsByRegion).map(([regionId, { region, repFirms: regionRepFirms }]) => {
-                    const filtered = filterRepFirms(regionRepFirms)
-                    if (filtered.length === 0) return null
-
-                    const allSelected = filtered.every(rf => repFirmIds.includes(rf.id))
-                    const isSelectedRegion = selectedRegionIds.includes(regionId)
-
-                    return (
-                      <div
-                        key={regionId}
-                        className={`border rounded-lg p-4 ${
-                          isSelectedRegion
-                            ? 'border-sonance-blue/50 bg-sonance-blue/5'
-                            : 'border-card-border'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="font-semibold text-foreground">
-                            {region.name}
-                            {isSelectedRegion && (
-                              <span className="ml-2 text-xs bg-sonance-blue text-white px-2 py-0.5 rounded">
-                                Selected Region
-                              </span>
-                            )}
-                          </h3>
+                  <div className="p-6">
+                    {/* Add New Entity Form */}
+                    {showAddRepFirm && newRepFirmEntityType === channelType && (
+                      <div className="mb-4 p-4 bg-sonance-blue/5 border border-sonance-blue/20 rounded-lg">
+                        <div className="flex flex-wrap gap-3 items-end">
+                          <div className="flex-1 min-w-[200px]">
+                            <label className="block text-xs font-semibold text-foreground mb-1 uppercase tracking-wide">
+                              Name
+                            </label>
+                            <input
+                              type="text"
+                              value={newRepFirmName}
+                              onChange={(e) => setNewRepFirmName(e.target.value)}
+                              placeholder={`e.g., ${channelType === 'rep_firm' ? 'ABC Representatives' : channelType === 'distributor' ? 'Mexico Distribution Co' : 'Strategic Partner Inc'}`}
+                              className="w-full px-3 py-2 border-2 border-card-border rounded-lg bg-input-bg text-foreground text-sm focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                            />
+                          </div>
+                          <div className="w-48">
+                            <label className="block text-xs font-semibold text-foreground mb-1 uppercase tracking-wide">
+                              Region (Optional)
+                            </label>
+                            <select
+                              value={newRepFirmRegionId}
+                              onChange={(e) => setNewRepFirmRegionId(e.target.value)}
+                              className="w-full px-3 py-2 border-2 border-card-border rounded-lg bg-input-bg text-foreground text-sm focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                            >
+                              <option value="">-- No Region --</option>
+                              {regions.map((region) => (
+                                <option key={region.id} value={region.id}>
+                                  {region.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                           <button
                             type="button"
-                            onClick={() => handleSelectAllRepFirmsFromRegion(regionId)}
-                            className="text-sm text-sonance-blue hover:underline"
+                            onClick={() => handleAddRepFirm(channelType)}
+                            disabled={addingRepFirm || !newRepFirmName.trim()}
+                            className="px-4 py-2 bg-sonance-blue text-white rounded-lg hover:bg-sonance-blue/90 transition-colors font-semibold uppercase tracking-wide text-xs disabled:opacity-50"
                           >
-                            {allSelected ? 'Deselect All' : 'Select All'}
+                            {addingRepFirm ? 'Adding...' : 'Add'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowAddRepFirm(false)
+                              setNewRepFirmName('')
+                              setNewRepFirmRegionId('')
+                            }}
+                            className="px-4 py-2 border border-card-border rounded-lg text-foreground hover:bg-muted/50 transition-colors text-xs"
+                          >
+                            Cancel
                           </button>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {filtered.map((repFirm) => (
-                            <div
-                              key={repFirm.id}
-                              className="group flex items-center justify-between p-2 rounded hover:bg-muted/50"
-                            >
-                              <label className="flex items-center gap-2 cursor-pointer flex-1">
-                                <input
-                                  type="checkbox"
-                                  checked={repFirmIds.includes(repFirm.id)}
-                                  onChange={() => handleRepFirmToggle(repFirm.id)}
-                                  className="w-4 h-4 rounded border-card-border text-sonance-blue focus:ring-sonance-blue"
-                                />
-                                <span className="text-sm text-foreground">{repFirm.name}</span>
-                              </label>
-                              <button
-                                type="button"
-                                onClick={() => openDeleteModal('rep_firm', repFirm)}
-                                className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:text-red-700 transition-opacity"
-                                title="Deactivate rep firm"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                              </button>
-                            </div>
-                          ))}
-                        </div>
                       </div>
-                    )
-                  })}
+                    )}
 
-                  {/* Unassigned rep firms */}
-                  {filterRepFirms(unassignedRepFirms).length > 0 && (
-                    <div className="border border-card-border rounded-lg p-4">
-                      <h3 className="font-semibold text-foreground mb-3 opacity-70">
-                        No Region Assigned
-                      </h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {filterRepFirms(unassignedRepFirms).map((repFirm) => (
-                          <div
-                            key={repFirm.id}
-                            className="group flex items-center justify-between p-2 rounded hover:bg-muted/50"
+                    {/* Search */}
+                    <input
+                      type="text"
+                      placeholder={`Search ${channelLabel.toLowerCase()}...`}
+                      value={repFirmSearch}
+                      onChange={(e) => setRepFirmSearch(e.target.value)}
+                      className="w-full max-w-md px-4 py-2 mb-4 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                    />
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-64 overflow-y-auto p-2 border border-card-border rounded-lg bg-input-bg">
+                      {filteredEntities.map((entity) => (
+                        <div
+                          key={entity.id}
+                          className="group flex items-center justify-between p-2 rounded hover:bg-muted/50"
+                        >
+                          <label className="flex items-center gap-2 cursor-pointer flex-1">
+                            <input
+                              type="checkbox"
+                              checked={repFirmIds.includes(entity.id)}
+                              onChange={() => handleRepFirmToggle(entity.id)}
+                              className="w-4 h-4 rounded border-card-border text-sonance-blue focus:ring-sonance-blue"
+                            />
+                            <span className="text-sm text-foreground">{entity.name}</span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => openDeleteModal('rep_firm', entity)}
+                            className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:text-red-700 transition-opacity"
+                            title={`Deactivate ${channelLabel.toLowerCase().replace(/s$/, '')}`}
                           >
-                            <label className="flex items-center gap-2 cursor-pointer flex-1">
-                              <input
-                                type="checkbox"
-                                checked={repFirmIds.includes(repFirm.id)}
-                                onChange={() => handleRepFirmToggle(repFirm.id)}
-                                className="w-4 h-4 rounded border-card-border text-sonance-blue focus:ring-sonance-blue"
-                              />
-                              <span className="text-sm text-foreground">{repFirm.name}</span>
-                            </label>
-                            <button
-                              type="button"
-                              onClick={() => openDeleteModal('rep_firm', repFirm)}
-                              className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:text-red-700 transition-opacity"
-                              title="Deactivate rep firm"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                      {filteredEntities.length === 0 && (
+                        <p className="col-span-full text-foreground opacity-60 text-center py-4">
+                          {typeEntities.length === 0
+                            ? `No ${channelLabel.toLowerCase()} available. Click "+ Add" above to create one.`
+                            : `No ${channelLabel.toLowerCase()} match your search.`}
+                        </p>
+                      )}
                     </div>
-                  )}
 
-                  {repFirms.length === 0 && (
-                    <p className="text-foreground opacity-60 text-center py-4">
-                      No rep firms available. Add rep firms in the Manage section first.
-                    </p>
-                  )}
+                    {selectedCount > 0 && (
+                      <p className="mt-4 text-sm text-foreground opacity-70">
+                        {selectedCount} {channelLabel.toLowerCase()}{selectedCount !== 1 ? '' : ''} selected
+                      </p>
+                    )}
+                  </div>
                 </div>
+              )
+            })}
 
-                {repFirmIds.length > 0 && (
-                  <p className="mt-4 text-sm text-foreground opacity-70">
-                    {repFirmIds.length} rep firm{repFirmIds.length !== 1 ? 's' : ''} selected
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Customer Assignment */}
+            {/* Direct Customer Assignment - Only show if usesDirectCustomers is enabled */}
+            {usesDirectCustomers && (
             <div className="bg-card-bg rounded-lg shadow mb-6">
               <div className="px-6 py-4 border-b border-card-border flex justify-between items-start">
                 <div>
                   <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">
-                    Customer Assignment
+                    Direct Customer Assignment
                   </h2>
                   <p className="text-sm text-foreground opacity-70">
-                    Select strategic accounts this director manages
+                    Select direct customers this director manages
                   </p>
                 </div>
                 <button
@@ -1154,6 +1170,7 @@ export default function SetupWizardPage() {
                 )}
               </div>
             </div>
+            )}
 
             {/* Actions */}
             <div className="flex gap-3">

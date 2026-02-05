@@ -6,6 +6,10 @@ const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placehold
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Types for our database tables
+
+// Sales entity types for flexible channel configuration
+export type SalesEntityType = 'rep_firm' | 'distributor' | 'specialty_account'
+
 export interface Region {
   id: string
   name: string
@@ -19,6 +23,7 @@ export interface RepFirmMaster {
   id: string
   name: string
   region_id: string | null
+  entity_type: SalesEntityType
   active: boolean
   created_at: string
   region?: Region // For joined queries
@@ -30,11 +35,13 @@ export interface Director {
   email: string
   region: string // Legacy text field
   region_id: string | null
+  uses_direct_customers: boolean
   created_at: string
   regions?: Region // For joined queries (primary region)
   director_region_access?: DirectorRegionAccess[] // All accessible regions
   director_rep_access?: DirectorRepAccess[] // Assigned rep firms
   director_customer_access?: DirectorCustomerAccess[] // Assigned customers
+  director_channel_config?: DirectorChannelConfig[] // Configured sales channel types
 }
 
 export interface DirectorRegionAccess {
@@ -67,6 +74,13 @@ export interface DirectorRepAccess {
   rep_firm_id: string
   created_at: string
   rep_firms_master?: RepFirmMaster // For joined queries
+}
+
+export interface DirectorChannelConfig {
+  id: string
+  director_id: string
+  channel_type: SalesEntityType
+  created_at: string
 }
 
 export interface Report {
