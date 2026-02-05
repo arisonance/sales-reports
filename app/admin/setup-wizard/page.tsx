@@ -4,8 +4,16 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AdminNav from '@/components/admin/AdminNav'
+import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal'
 import { Director, Region, RepFirmMaster, CustomerMaster } from '@/lib/supabase'
 import { fetchWithRetry } from '@/lib/fetchWithRetry'
+
+type DeleteType = 'director' | 'region' | 'rep_firm' | 'customer'
+interface DeleteModalState {
+  isOpen: boolean
+  type: DeleteType
+  item: Director | Region | RepFirmMaster | CustomerMaster | null
+}
 
 interface DirectorSetup {
   director: Director
@@ -48,6 +56,20 @@ export default function SetupWizardPage() {
   const [showAddCustomer, setShowAddCustomer] = useState(false)
   const [newCustomerName, setNewCustomerName] = useState('')
   const [addingCustomer, setAddingCustomer] = useState(false)
+
+  // Add director form
+  const [showAddDirector, setShowAddDirector] = useState(false)
+  const [newDirectorName, setNewDirectorName] = useState('')
+  const [newDirectorEmail, setNewDirectorEmail] = useState('')
+  const [addingDirector, setAddingDirector] = useState(false)
+
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState<DeleteModalState>({
+    isOpen: false,
+    type: 'director',
+    item: null,
+  })
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // UI state
   const [loading, setLoading] = useState(true)
@@ -284,6 +306,146 @@ export default function SetupWizardPage() {
     }
   }
 
+  const handleAddDirector = async () => {
+    if (!newDirectorName.trim() || !newDirectorEmail.trim()) return
+
+    setAddingDirector(true)
+    try {
+      const res = await fetch('/api/directors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newDirectorName.trim(),
+          email: newDirectorEmail.trim().toLowerCase(),
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to add director')
+      }
+
+      const newDirector = await res.json()
+      setDirectors(prev => [...prev, newDirector].sort((a, b) => a.name.localeCompare(b.name)))
+      setNewDirectorName('')
+      setNewDirectorEmail('')
+      setShowAddDirector(false)
+      // Auto-select the new director
+      handleDirectorChange(newDirector.id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add director')
+    } finally {
+      setAddingDirector(false)
+    }
+  }
+
+  const openDeleteModal = (type: DeleteType, item: Director | Region | RepFirmMaster | CustomerMaster) => {
+    setDeleteModal({ isOpen: true, type, item })
+  }
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, type: 'director', item: null })
+  }
+
+  const getDeleteTitle = () => {
+    switch (deleteModal.type) {
+      case 'director': return 'Delete Director'
+      case 'region': return 'Delete Region'
+      case 'rep_firm': return 'Deactivate Rep Firm'
+      case 'customer': return 'Deactivate Customer'
+    }
+  }
+
+  const getDeleteMessage = () => {
+    if (!deleteModal.item) return ''
+    const name = deleteModal.item.name
+    switch (deleteModal.type) {
+      case 'director':
+        return `Are you sure you want to delete "${name}"? This cannot be undone.`
+      case 'region':
+        return `Are you sure you want to delete "${name}"? This cannot be undone.`
+      case 'rep_firm':
+        return `Are you sure you want to deactivate "${name}"? This will hide it from dropdowns but preserve historical data.`
+      case 'customer':
+        return `Are you sure you want to deactivate "${name}"? This will hide it from dropdowns but preserve historical data.`
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteModal.item) return
+
+    const { type, item } = deleteModal
+
+    // Prevent deleting the currently selected director
+    if (type === 'director' && item.id === selectedDirectorId) {
+      setError('Cannot delete the currently selected director. Select a different director first.')
+      closeDeleteModal()
+      return
+    }
+
+    // Prevent deleting the primary region
+    if (type === 'region' && item.id === primaryRegionId) {
+      setError('Cannot delete the primary region. Select a different primary region first.')
+      closeDeleteModal()
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      let endpoint = ''
+      switch (type) {
+        case 'director':
+          endpoint = `/api/directors/${item.id}`
+          break
+        case 'region':
+          endpoint = `/api/regions/${item.id}`
+          break
+        case 'rep_firm':
+          endpoint = `/api/rep-firms/${item.id}`
+          break
+        case 'customer':
+          endpoint = `/api/customers/${item.id}`
+          break
+      }
+
+      const res = await fetch(endpoint, { method: 'DELETE' })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || `Failed to delete ${type}`)
+      }
+
+      // Update local state based on type
+      switch (type) {
+        case 'director':
+          setDirectors(prev => prev.filter(d => d.id !== item.id))
+          break
+        case 'region':
+          setRegions(prev => prev.filter(r => r.id !== item.id))
+          // Clean up region from additional regions if selected
+          setAdditionalRegionIds(prev => prev.filter(id => id !== item.id))
+          break
+        case 'rep_firm':
+          setRepFirms(prev => prev.filter(rf => rf.id !== item.id))
+          // Clean up from selection
+          setRepFirmIds(prev => prev.filter(id => id !== item.id))
+          break
+        case 'customer':
+          setCustomers(prev => prev.filter(c => c.id !== item.id))
+          // Clean up from selection
+          setCustomerIds(prev => prev.filter(id => id !== item.id))
+          break
+      }
+
+      closeDeleteModal()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `Failed to delete ${type}`)
+      closeDeleteModal()
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   const handleSave = async () => {
     if (!selectedDirectorId) {
       setError('Please select a director')
@@ -453,27 +615,104 @@ export default function SetupWizardPage() {
 
         {/* Director Selection */}
         <div className="bg-card-bg rounded-lg shadow mb-6">
-          <div className="px-6 py-4 border-b border-card-border">
-            <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">
-              Select Director
-            </h2>
-            <p className="text-sm text-foreground opacity-70">
-              Choose a director to configure their assignments
-            </p>
-          </div>
-          <div className="p-6">
-            <select
-              value={selectedDirectorId}
-              onChange={(e) => handleDirectorChange(e.target.value)}
-              className="w-full max-w-md px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+          <div className="px-6 py-4 border-b border-card-border flex justify-between items-start">
+            <div>
+              <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">
+                Select Director
+              </h2>
+              <p className="text-sm text-foreground opacity-70">
+                Choose a director to configure their assignments
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAddDirector(!showAddDirector)}
+              className="px-3 py-1.5 bg-sonance-green text-white rounded-lg hover:bg-sonance-green/90 transition-colors font-semibold uppercase tracking-wide text-xs"
             >
-              <option value="">-- Select a Director --</option>
-              {directors.map((director) => (
-                <option key={director.id} value={director.id}>
-                  {director.name} ({director.email})
-                </option>
-              ))}
-            </select>
+              + Add Director
+            </button>
+          </div>
+          <div className="p-6 space-y-4">
+            {/* Add New Director Form */}
+            {showAddDirector && (
+              <div className="p-4 bg-sonance-blue/5 border border-sonance-blue/20 rounded-lg">
+                <div className="flex flex-wrap gap-3 items-end">
+                  <div className="flex-1 min-w-[150px]">
+                    <label className="block text-xs font-semibold text-foreground mb-1 uppercase tracking-wide">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newDirectorName}
+                      onChange={(e) => setNewDirectorName(e.target.value)}
+                      placeholder="e.g., John Smith"
+                      className="w-full px-3 py-2 border-2 border-card-border rounded-lg bg-input-bg text-foreground text-sm focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-[200px]">
+                    <label className="block text-xs font-semibold text-foreground mb-1 uppercase tracking-wide">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={newDirectorEmail}
+                      onChange={(e) => setNewDirectorEmail(e.target.value)}
+                      placeholder="e.g., john@sonance.com"
+                      className="w-full px-3 py-2 border-2 border-card-border rounded-lg bg-input-bg text-foreground text-sm focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddDirector}
+                    disabled={addingDirector || !newDirectorName.trim() || !newDirectorEmail.trim()}
+                    className="px-4 py-2 bg-sonance-blue text-white rounded-lg hover:bg-sonance-blue/90 transition-colors font-semibold uppercase tracking-wide text-xs disabled:opacity-50"
+                  >
+                    {addingDirector ? 'Adding...' : 'Add'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddDirector(false)
+                      setNewDirectorName('')
+                      setNewDirectorEmail('')
+                    }}
+                    className="px-4 py-2 border border-card-border rounded-lg text-foreground hover:bg-muted/50 transition-colors text-xs"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3 items-center">
+              <select
+                value={selectedDirectorId}
+                onChange={(e) => handleDirectorChange(e.target.value)}
+                className="flex-1 max-w-md px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+              >
+                <option value="">-- Select a Director --</option>
+                {directors.map((director) => (
+                  <option key={director.id} value={director.id}>
+                    {director.name} ({director.email})
+                  </option>
+                ))}
+              </select>
+              {selectedDirectorId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const director = directors.find(d => d.id === selectedDirectorId)
+                    if (director) openDeleteModal('director', director)
+                  }}
+                  className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Delete this director"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -571,18 +810,30 @@ export default function SetupWizardPage() {
                     {regions
                       .filter(r => r.id !== primaryRegionId)
                       .map((region) => (
-                        <label
+                        <div
                           key={region.id}
-                          className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                          className="group flex items-center justify-between p-2 rounded hover:bg-muted/50"
                         >
-                          <input
-                            type="checkbox"
-                            checked={additionalRegionIds.includes(region.id)}
-                            onChange={() => handleAdditionalRegionToggle(region.id)}
-                            className="w-4 h-4 rounded border-card-border text-sonance-blue focus:ring-sonance-blue"
-                          />
-                          <span className="text-sm text-foreground">{region.name}</span>
-                        </label>
+                          <label className="flex items-center gap-2 cursor-pointer flex-1">
+                            <input
+                              type="checkbox"
+                              checked={additionalRegionIds.includes(region.id)}
+                              onChange={() => handleAdditionalRegionToggle(region.id)}
+                              className="w-4 h-4 rounded border-card-border text-sonance-blue focus:ring-sonance-blue"
+                            />
+                            <span className="text-sm text-foreground">{region.name}</span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => openDeleteModal('region', region)}
+                            className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:text-red-700 transition-opacity"
+                            title="Delete region"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
                       ))}
                   </div>
                 </div>
@@ -711,18 +962,30 @@ export default function SetupWizardPage() {
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                           {filtered.map((repFirm) => (
-                            <label
+                            <div
                               key={repFirm.id}
-                              className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                              className="group flex items-center justify-between p-2 rounded hover:bg-muted/50"
                             >
-                              <input
-                                type="checkbox"
-                                checked={repFirmIds.includes(repFirm.id)}
-                                onChange={() => handleRepFirmToggle(repFirm.id)}
-                                className="w-4 h-4 rounded border-card-border text-sonance-blue focus:ring-sonance-blue"
-                              />
-                              <span className="text-sm text-foreground">{repFirm.name}</span>
-                            </label>
+                              <label className="flex items-center gap-2 cursor-pointer flex-1">
+                                <input
+                                  type="checkbox"
+                                  checked={repFirmIds.includes(repFirm.id)}
+                                  onChange={() => handleRepFirmToggle(repFirm.id)}
+                                  className="w-4 h-4 rounded border-card-border text-sonance-blue focus:ring-sonance-blue"
+                                />
+                                <span className="text-sm text-foreground">{repFirm.name}</span>
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => openDeleteModal('rep_firm', repFirm)}
+                                className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:text-red-700 transition-opacity"
+                                title="Deactivate rep firm"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -737,18 +1000,30 @@ export default function SetupWizardPage() {
                       </h3>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                         {filterRepFirms(unassignedRepFirms).map((repFirm) => (
-                          <label
+                          <div
                             key={repFirm.id}
-                            className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                            className="group flex items-center justify-between p-2 rounded hover:bg-muted/50"
                           >
-                            <input
-                              type="checkbox"
-                              checked={repFirmIds.includes(repFirm.id)}
-                              onChange={() => handleRepFirmToggle(repFirm.id)}
-                              className="w-4 h-4 rounded border-card-border text-sonance-blue focus:ring-sonance-blue"
-                            />
-                            <span className="text-sm text-foreground">{repFirm.name}</span>
-                          </label>
+                            <label className="flex items-center gap-2 cursor-pointer flex-1">
+                              <input
+                                type="checkbox"
+                                checked={repFirmIds.includes(repFirm.id)}
+                                onChange={() => handleRepFirmToggle(repFirm.id)}
+                                className="w-4 h-4 rounded border-card-border text-sonance-blue focus:ring-sonance-blue"
+                              />
+                              <span className="text-sm text-foreground">{repFirm.name}</span>
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => openDeleteModal('rep_firm', repFirm)}
+                              className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:text-red-700 transition-opacity"
+                              title="Deactivate rep firm"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -838,18 +1113,30 @@ export default function SetupWizardPage() {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-64 overflow-y-auto p-2 border border-card-border rounded-lg bg-input-bg">
                   {filteredCustomers.map((customer) => (
-                    <label
+                    <div
                       key={customer.id}
-                      className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                      className="group flex items-center justify-between p-2 rounded hover:bg-muted/50"
                     >
-                      <input
-                        type="checkbox"
-                        checked={customerIds.includes(customer.id)}
-                        onChange={() => handleCustomerToggle(customer.id)}
-                        className="w-4 h-4 rounded border-card-border text-sonance-blue focus:ring-sonance-blue"
-                      />
-                      <span className="text-sm text-foreground">{customer.name}</span>
-                    </label>
+                      <label className="flex items-center gap-2 cursor-pointer flex-1">
+                        <input
+                          type="checkbox"
+                          checked={customerIds.includes(customer.id)}
+                          onChange={() => handleCustomerToggle(customer.id)}
+                          className="w-4 h-4 rounded border-card-border text-sonance-blue focus:ring-sonance-blue"
+                        />
+                        <span className="text-sm text-foreground">{customer.name}</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => openDeleteModal('customer', customer)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:text-red-700 transition-opacity"
+                        title="Deactivate customer"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
                   ))}
                   {filteredCustomers.length === 0 && (
                     <p className="col-span-full text-foreground opacity-60 text-center py-4">
@@ -893,6 +1180,16 @@ export default function SetupWizardPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={closeDeleteModal}
+        onConfirm={handleDelete}
+        title={getDeleteTitle()}
+        message={getDeleteMessage()}
+        isDeleting={isDeleting}
+      />
     </div>
   )
 }
