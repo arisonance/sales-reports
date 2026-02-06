@@ -279,7 +279,6 @@ export default function SetupWizardPage() {
 
       const newEntity = await res.json()
       setRepFirms(prev => [...prev, newEntity])
-      setRepFirmIds(prev => [...prev, newEntity.id]) // Auto-select the new one
       setNewRepFirmName('')
       setNewRepFirmRegionId('')
       setNewRepFirmEntityType('rep_firm')
@@ -308,7 +307,6 @@ export default function SetupWizardPage() {
 
       const newCustomer = await res.json()
       setCustomers(prev => [...prev, newCustomer])
-      setCustomerIds(prev => [...prev, newCustomer.id]) // Auto-select the new one
       setNewCustomerName('')
       setShowAddCustomer(false)
     } catch (err) {
@@ -342,8 +340,7 @@ export default function SetupWizardPage() {
       setNewDirectorName('')
       setNewDirectorEmail('')
       setShowAddDirector(false)
-      // Auto-select the new director
-      handleDirectorChange(newDirector.id)
+      setSuccess(`Director "${newDirector.name}" added. Select them from the dropdown to configure.`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add director')
     } finally {

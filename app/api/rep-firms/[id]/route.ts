@@ -35,19 +35,24 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { name, region_id, active } = body
+    const { name, region_id, active, entity_type } = body
 
     if (!name || !name.trim()) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
     }
 
+    const updateData: Record<string, unknown> = {
+      name: name.trim(),
+      region_id: region_id || null,
+      active: active !== false,
+    }
+    if (entity_type && ['rep_firm', 'distributor', 'specialty_account'].includes(entity_type)) {
+      updateData.entity_type = entity_type
+    }
+
     const { data, error } = await supabase
       .from('rep_firms_master')
-      .update({
-        name: name.trim(),
-        region_id: region_id || null,
-        active: active !== false
-      })
+      .update(updateData)
       .eq('id', id)
       .select('*, regions(id, name)')
       .single()

@@ -68,8 +68,33 @@ export default function RepFirmsPage() {
     }
   }
 
+  const handleReactivate = async (repFirm: RepFirmMaster) => {
+    try {
+      const res = await fetch(`/api/rep-firms/${repFirm.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: repFirm.name, active: true }),
+      })
+      if (!res.ok) throw new Error('Failed to reactivate')
+      await fetchRepFirms()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reactivate rep firm')
+    }
+  }
+
+  const entityTypeLabels: Record<string, string> = {
+    rep_firm: 'Rep Firm',
+    distributor: 'Distributor',
+    specialty_account: 'Specialty Account',
+  }
+
   const columns: Column<RepFirmMaster>[] = [
     { key: 'name', header: 'Name' },
+    {
+      key: 'entity_type',
+      header: 'Type',
+      render: (repFirm) => entityTypeLabels[repFirm.entity_type] || repFirm.entity_type,
+    },
     {
       key: 'regions.name',
       header: 'Region',
@@ -175,6 +200,8 @@ export default function RepFirmsPage() {
             keyField="id"
             editPath={(repFirm) => `/admin/manage/rep-firms/${repFirm.id}`}
             onDelete={(repFirm) => setDeleteModal({ isOpen: true, repFirm })}
+            onReactivate={handleReactivate}
+            isInactive={(repFirm) => !repFirm.active}
             emptyMessage="No rep firms found. Add your first rep firm to get started."
           />
         </div>

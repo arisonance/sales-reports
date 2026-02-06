@@ -4,7 +4,7 @@ import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AdminNav from '@/components/admin/AdminNav'
-import { Region } from '@/lib/supabase'
+import { Region, SalesEntityType } from '@/lib/supabase'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -17,6 +17,7 @@ export default function RepFirmEditPage({ params }: Props) {
 
   const [name, setName] = useState('')
   const [regionId, setRegionId] = useState('')
+  const [entityType, setEntityType] = useState<SalesEntityType>('rep_firm')
   const [active, setActive] = useState(true)
   const [regions, setRegions] = useState<Region[]>([])
   const [loading, setLoading] = useState(true)
@@ -57,6 +58,7 @@ export default function RepFirmEditPage({ params }: Props) {
       const data = await res.json()
       setName(data.name)
       setRegionId(data.region_id || '')
+      setEntityType(data.entity_type || 'rep_firm')
       setActive(data.active)
     } catch (err) {
       console.error('Error fetching rep firm:', err)
@@ -81,6 +83,7 @@ export default function RepFirmEditPage({ params }: Props) {
         body: JSON.stringify({
           name,
           region_id: regionId || null,
+          entity_type: entityType,
           active,
         }),
       })
@@ -166,6 +169,21 @@ export default function RepFirmEditPage({ params }: Props) {
                 required
                 className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
+                Entity Type
+              </label>
+              <select
+                value={entityType}
+                onChange={(e) => setEntityType(e.target.value as SalesEntityType)}
+                className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+              >
+                <option value="rep_firm">Rep Firm</option>
+                <option value="distributor">Distributor</option>
+                <option value="specialty_account">Specialty Account</option>
+              </select>
             </div>
 
             <div>

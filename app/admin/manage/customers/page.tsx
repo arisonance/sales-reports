@@ -67,6 +67,20 @@ export default function CustomersPage() {
     }
   }
 
+  const handleReactivate = async (customer: CustomerMaster) => {
+    try {
+      const res = await fetch(`/api/customers/${customer.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: customer.name, active: true }),
+      })
+      if (!res.ok) throw new Error('Failed to reactivate')
+      await fetchCustomers()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reactivate customer')
+    }
+  }
+
   const columns: Column<CustomerMaster>[] = [
     { key: 'name', header: 'Name' },
     {
@@ -169,6 +183,8 @@ export default function CustomersPage() {
             keyField="id"
             editPath={(customer) => `/admin/manage/customers/${customer.id}`}
             onDelete={(customer) => setDeleteModal({ isOpen: true, customer })}
+            onReactivate={handleReactivate}
+            isInactive={(customer) => !customer.active}
             emptyMessage="No customers found. Add your first customer to get started."
           />
         </div>

@@ -14,6 +14,8 @@ interface DataTableProps<T> {
   keyField: keyof T
   editPath: (item: T) => string
   onDelete: (item: T) => void
+  onReactivate?: (item: T) => void
+  isInactive?: (item: T) => boolean
   emptyMessage?: string
 }
 
@@ -23,6 +25,8 @@ export default function DataTable<T extends { id: string }>({
   keyField,
   editPath,
   onDelete,
+  onReactivate,
+  isInactive,
   emptyMessage = 'No data found.',
 }: DataTableProps<T>) {
   if (data.length === 0) {
@@ -81,12 +85,21 @@ export default function DataTable<T extends { id: string }>({
                   >
                     Edit
                   </Link>
-                  <button
-                    onClick={() => onDelete(item)}
-                    className="text-red-500 hover:text-red-700 text-sm font-semibold uppercase tracking-wide"
-                  >
-                    Delete
-                  </button>
+                  {onReactivate && isInactive && isInactive(item) ? (
+                    <button
+                      onClick={() => onReactivate(item)}
+                      className="text-sonance-green hover:text-sonance-green/80 text-sm font-semibold uppercase tracking-wide"
+                    >
+                      Reactivate
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => onDelete(item)}
+                      className="text-red-500 hover:text-red-700 text-sm font-semibold uppercase tracking-wide"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>
