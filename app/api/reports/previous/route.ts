@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       { data: competitors },
       { data: goodJobs }
     ] = await Promise.all([
-      supabase.from('rep_firms').select('name').eq('report_id', report.id),
+      supabase.from('rep_firms').select('name, entity_type').eq('report_id', report.id),
       supabase.from('competitors').select('name').eq('report_id', report.id),
       supabase.from('good_jobs').select('person_name').eq('report_id', report.id)
     ])
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       exists: true,
       month: report.month,
       displayMonth,
-      repFirmNames: (repFirms || []).map(r => r.name).filter(Boolean),
+      repFirmNames: (repFirms || []).filter(r => r.name).map(r => ({ name: r.name, entityType: r.entity_type || 'rep_firm' })),
       competitorNames: (competitors || []).map(c => c.name).filter(Boolean),
       goodJobsNames: (goodJobs || []).map(g => g.person_name).filter(Boolean)
     })

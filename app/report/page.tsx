@@ -41,7 +41,7 @@ export interface ReportData {
   openOrders: number
   pipeline: number
 
-  // Sales Data - Rep Firms
+  // Sales Data - Rep Firms / Distributors / Strategic Accounts / Direct Customers
   repFirms: Array<{
     id: string
     name: string
@@ -49,6 +49,7 @@ export interface ReportData {
     ytdSales: number
     percentToGoal: number
     yoyGrowth: number
+    entityType: string
   }>
 
   // Competition
@@ -90,7 +91,7 @@ const initialReportData: ReportData = {
   ytdGoal: 0,
   openOrders: 0,
   pipeline: 0,
-  repFirms: [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0 }],
+  repFirms: [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0, entityType: 'rep_firm' }],
   competitors: [{ id: '1', name: '', whatWereSeeing: '', ourResponse: '' }],
   marketTrends: '',
   industryInfo: '',
@@ -103,11 +104,18 @@ const initialReportData: ReportData = {
   goodJobs: [{ id: '1', personName: '', reason: '' }],
 }
 
+export interface ChannelConfig {
+  channel_types: string[]
+  uses_direct_customers: boolean
+  entities: Array<{ id: string; name: string; entity_type: string }>
+  customers: Array<{ id: string; name: string }>
+}
+
 interface PreviousReportData {
   exists: boolean
   month: string
   displayMonth: string
-  repFirmNames: string[]
+  repFirmNames: Array<{ name: string; entityType: string }>
   competitorNames: string[]
   goodJobsNames: string[]
 }
@@ -119,6 +127,14 @@ export default function ReportPage() {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved')
   const [loading, setLoading] = useState(true)
   const isInitialLoad = useRef(true)
+
+  // Channel config from wizard
+  const [channelConfig, setChannelConfig] = useState<ChannelConfig>({
+    channel_types: [],
+    uses_direct_customers: false,
+    entities: [],
+    customers: [],
+  })
 
   // Copy from previous report state
   const [previousReportData, setPreviousReportData] = useState<PreviousReportData | null>(null)
@@ -148,6 +164,23 @@ export default function ReportPage() {
       }
 
       if (director) {
+        // Fetch channel config from wizard setup
+        let fetchedChannelConfig: ChannelConfig = {
+          channel_types: [],
+          uses_direct_customers: false,
+          entities: [],
+          customers: [],
+        }
+        try {
+          const channelRes = await fetch(`/api/directors/${directorId}/channel-config`)
+          if (channelRes.ok) {
+            fetchedChannelConfig = await channelRes.json()
+            setChannelConfig(fetchedChannelConfig)
+          }
+        } catch (err) {
+          console.error('Failed to fetch channel config:', err)
+        }
+
         // Check for existing report for current month
         const currentMonth = new Date().toISOString().slice(0, 7)
         const reportRes = await fetch('/api/reports/check', {
@@ -182,15 +215,16 @@ export default function ReportPage() {
                 openOrders: existingReport.regionalPerformance?.open_orders || 0,
                 pipeline: existingReport.regionalPerformance?.pipeline || 0,
                 repFirms: existingReport.repFirms?.length > 0
-                  ? existingReport.repFirms.map((r: { id: string; name: string; monthly_sales: number; ytd_sales: number; percent_to_goal: number; yoy_growth: number }) => ({
+                  ? existingReport.repFirms.map((r: { id: string; name: string; monthly_sales: number; ytd_sales: number; percent_to_goal: number; yoy_growth: number; entity_type?: string }) => ({
                       id: r.id,
                       name: r.name,
                       monthlySales: r.monthly_sales || 0,
                       ytdSales: r.ytd_sales || 0,
                       percentToGoal: r.percent_to_goal || 0,
-                      yoyGrowth: r.yoy_growth || 0
+                      yoyGrowth: r.yoy_growth || 0,
+                      entityType: r.entity_type || 'rep_firm',
                     }))
-                  : [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0 }],
+                  : [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0, entityType: 'rep_firm' }],
                 competitors: existingReport.competitors?.length > 0
                   ? existingReport.competitors.map((c: { id: string; name: string; what_were_seeing: string; our_response: string }) => ({
                       id: c.id,
@@ -216,13 +250,46 @@ export default function ReportPage() {
                   : [{ id: '1', personName: '', reason: '' }],
               })
             } else {
-              // New report - just set director info
+              // New report - pre-populate entities from wizard assignments
+              const prePopulatedEntities: ReportData['repFirms'] = []
+
+              for (const entity of fetchedChannelConfig.entities) {
+                if (fetchedChannelConfig.channel_types.includes(entity.entity_type)) {
+                  prePopulatedEntities.push({
+                    id: `wizard-${entity.id}`,
+                    name: entity.name,
+                    monthlySales: 0,
+                    ytdSales: 0,
+                    percentToGoal: 0,
+                    yoyGrowth: 0,
+                    entityType: entity.entity_type,
+                  })
+                }
+              }
+
+              if (fetchedChannelConfig.uses_direct_customers) {
+                for (const customer of fetchedChannelConfig.customers) {
+                  prePopulatedEntities.push({
+                    id: `wizard-cust-${customer.id}`,
+                    name: customer.name,
+                    monthlySales: 0,
+                    ytdSales: 0,
+                    percentToGoal: 0,
+                    yoyGrowth: 0,
+                    entityType: 'direct_customer',
+                  })
+                }
+              }
+
               setReportData(prev => ({
                 ...prev,
                 directorId: director.id,
                 directorName: director.name,
                 region: director.region,
                 email: director.email,
+                repFirms: prePopulatedEntities.length > 0
+                  ? prePopulatedEntities
+                  : [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0, entityType: 'rep_firm' }],
               }))
 
               // Check for previous report to offer copy option
@@ -335,15 +402,16 @@ export default function ReportPage() {
 
     const updates: Partial<ReportData> = {}
 
-    // Copy rep firms - names only, numbers reset to 0
+    // Copy rep firms - names + entity types only, numbers reset to 0
     if (previousReportData.repFirmNames.length > 0) {
-      updates.repFirms = previousReportData.repFirmNames.map((name, i) => ({
+      updates.repFirms = previousReportData.repFirmNames.map((item, i) => ({
         id: `copied-${Date.now()}-${i}`,
-        name,
+        name: item.name,
         monthlySales: 0,
         ytdSales: 0,
         percentToGoal: 0,
         yoyGrowth: 0,
+        entityType: item.entityType,
       }))
     }
 
@@ -439,7 +507,7 @@ export default function ReportPage() {
       case 'wins':
         return <WinsHighlightsTab data={reportData} updateData={updateReportData} />
       case 'sales':
-        return <SalesDataTab data={reportData} updateData={updateReportData} directorId={reportData.directorId} />
+        return <SalesDataTab data={reportData} updateData={updateReportData} directorId={reportData.directorId} channelConfig={channelConfig} />
       case 'competition':
         return <CompetitionTab data={reportData} updateData={updateReportData} />
       case 'marketing':
@@ -565,7 +633,7 @@ export default function ReportPage() {
           onClose={() => setShowCopyModal(false)}
           onConfirm={handleCopyFromPrevious}
           previousMonth={previousReportData.displayMonth}
-          repFirmNames={previousReportData.repFirmNames}
+          repFirmNames={previousReportData.repFirmNames.map(r => r.name)}
           competitorNames={previousReportData.competitorNames}
           goodJobsNames={previousReportData.goodJobsNames}
         />

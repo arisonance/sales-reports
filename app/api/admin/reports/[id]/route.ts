@@ -316,13 +316,14 @@ export async function PUT(
     // Rep Firms
     if (repFirms && repFirms.length > 0) {
       await supabase.from('rep_firms').delete().eq('report_id', id)
-      const repFirmsData = repFirms.filter((r: { name: string }) => r.name).map((r: { name: string; monthlySales: number; ytdSales: number; percentToGoal: number; yoyGrowth: number }) => ({
+      const repFirmsData = repFirms.filter((r: { name: string }) => r.name).map((r: { name: string; monthlySales: number; ytdSales: number; percentToGoal: number; yoyGrowth: number; entityType?: string }) => ({
         report_id: id,
         name: r.name,
         monthly_sales: r.monthlySales || 0,
         ytd_sales: r.ytdSales || 0,
         percent_to_goal: r.percentToGoal || 0,
-        yoy_growth: r.yoyGrowth || 0
+        yoy_growth: r.yoyGrowth || 0,
+        entity_type: r.entityType || 'rep_firm',
       }))
       if (repFirmsData.length > 0) {
         await supabase.from('rep_firms').insert(repFirmsData)

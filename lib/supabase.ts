@@ -9,6 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Sales entity types for flexible channel configuration
 export type SalesEntityType = 'rep_firm' | 'distributor' | 'specialty_account'
+export type ReportEntityType = SalesEntityType | 'direct_customer'
 
 export interface Region {
   id: string
@@ -108,6 +109,7 @@ export interface RepFirm {
   ytd_sales: number
   percent_to_goal: number
   yoy_growth: number
+  entity_type: ReportEntityType
 }
 
 export interface Competitor {

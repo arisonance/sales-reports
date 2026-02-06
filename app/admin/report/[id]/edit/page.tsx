@@ -41,6 +41,7 @@ export interface ReportData {
     ytdSales: number
     percentToGoal: number
     yoyGrowth: number
+    entityType: string
   }>
   competitors: Array<{
     id: string
@@ -74,7 +75,7 @@ const initialReportData: ReportData = {
   ytdGoal: 0,
   openOrders: 0,
   pipeline: 0,
-  repFirms: [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0 }],
+  repFirms: [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0, entityType: 'rep_firm' }],
   competitors: [{ id: '1', name: '', whatWereSeeing: '', ourResponse: '' }],
   marketTrends: '',
   industryInfo: '',
@@ -153,15 +154,16 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
         openOrders: data.regionalPerformance?.open_orders || 0,
         pipeline: data.regionalPerformance?.pipeline || 0,
         repFirms: data.repFirms?.length > 0
-          ? data.repFirms.map((r: { id: string; name: string; monthly_sales: number; ytd_sales: number; percent_to_goal: number; yoy_growth: number }) => ({
+          ? data.repFirms.map((r: { id: string; name: string; monthly_sales: number; ytd_sales: number; percent_to_goal: number; yoy_growth: number; entity_type?: string }) => ({
               id: r.id,
               name: r.name,
               monthlySales: r.monthly_sales || 0,
               ytdSales: r.ytd_sales || 0,
               percentToGoal: r.percent_to_goal || 0,
-              yoyGrowth: r.yoy_growth || 0
+              yoyGrowth: r.yoy_growth || 0,
+              entityType: r.entity_type || 'rep_firm',
             }))
-          : [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0 }],
+          : [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0, entityType: 'rep_firm' }],
         competitors: data.competitors?.length > 0
           ? data.competitors.map((c: { id: string; name: string; what_were_seeing: string; our_response: string }) => ({
               id: c.id,

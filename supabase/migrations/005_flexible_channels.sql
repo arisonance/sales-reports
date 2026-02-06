@@ -37,7 +37,10 @@ CREATE INDEX IF NOT EXISTS idx_dcc_director_id ON director_channel_config(direct
 
 -- Enable RLS
 ALTER TABLE director_channel_config ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all access" ON director_channel_config FOR ALL USING (true);
+DO $$ BEGIN
+  CREATE POLICY "Allow all access" ON director_channel_config FOR ALL USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- 4. Seed channel config for existing directors with rep firm assignments
 -- Directors who have rep_firm assignments get 'rep_firm' channel type

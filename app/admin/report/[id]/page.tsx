@@ -26,6 +26,7 @@ interface ReportData {
     ytdSales: number
     percentToGoal: number
     yoyGrowth: number
+    entityType: string
   }>
   competitors: Array<{
     id: string
@@ -98,13 +99,15 @@ export default function ViewReport() {
           ytd_sales: number
           percent_to_goal: number
           yoy_growth: number
+          entity_type?: string
         }) => ({
           id: r.id,
           name: r.name,
           monthlySales: r.monthly_sales || 0,
           ytdSales: r.ytd_sales || 0,
           percentToGoal: r.percent_to_goal || 0,
-          yoyGrowth: r.yoy_growth || 0
+          yoyGrowth: r.yoy_growth || 0,
+          entityType: r.entity_type || 'rep_firm',
         })),
         competitors: (data.competitors || []).map((c: {
           id: string
@@ -269,33 +272,53 @@ export default function ViewReport() {
           </div>
         </div>
 
-        {/* Rep Firms */}
-        {report.repFirms.length > 0 && report.repFirms.some(f => f.name) && (
-          <div className="bg-card-bg rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Rep Firm Performance</h2>
-            <div className="space-y-4">
-              {report.repFirms.filter(f => f.name).map((firm) => (
-                <div key={firm.id} className="bg-muted/20 rounded-lg p-4">
-                  <h3 className="font-medium text-foreground">{firm.name}</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-sm">
-                    <div>
-                      <span className="text-foreground opacity-60">Monthly:</span> {formatCurrency(firm.monthlySales)}
+        {/* Entity Performance Sections - grouped by type */}
+        {(() => {
+          const SECTION_LABELS: Record<string, string> = {
+            rep_firm: 'Rep Firm Performance',
+            distributor: 'Distributor Performance',
+            specialty_account: 'Strategic Account Performance',
+            direct_customer: 'Direct Customer Performance',
+          }
+          const namedFirms = report.repFirms.filter(f => f.name)
+          const entityTypes = [...new Set(namedFirms.map(f => f.entityType || 'rep_firm'))]
+
+          if (namedFirms.length === 0) return null
+
+          return entityTypes.map((entityType) => {
+            const firms = namedFirms.filter(f => (f.entityType || 'rep_firm') === entityType)
+            if (firms.length === 0) return null
+
+            return (
+              <div key={entityType} className="bg-card-bg rounded-lg shadow p-6">
+                <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">
+                  {SECTION_LABELS[entityType] || entityType}
+                </h2>
+                <div className="space-y-4">
+                  {firms.map((firm) => (
+                    <div key={firm.id} className="bg-muted/20 rounded-lg p-4">
+                      <h3 className="font-medium text-foreground">{firm.name}</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-sm">
+                        <div>
+                          <span className="text-foreground opacity-60">Monthly:</span> {formatCurrency(firm.monthlySales)}
+                        </div>
+                        <div>
+                          <span className="text-foreground opacity-60">YTD:</span> {formatCurrency(firm.ytdSales)}
+                        </div>
+                        <div>
+                          <span className="text-foreground opacity-60">% to Goal:</span> {firm.percentToGoal}%
+                        </div>
+                        <div>
+                          <span className="text-foreground opacity-60">YoY Growth:</span> {firm.yoyGrowth}%
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-foreground opacity-60">YTD:</span> {formatCurrency(firm.ytdSales)}
-                    </div>
-                    <div>
-                      <span className="text-foreground opacity-60">% to Goal:</span> {firm.percentToGoal}%
-                    </div>
-                    <div>
-                      <span className="text-foreground opacity-60">YoY Growth:</span> {firm.yoyGrowth}%
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
+            )
+          })
+        })()}
 
         {/* Wins */}
         {report.wins.length > 0 && report.wins.some(w => w.title) && (

@@ -17,7 +17,8 @@ export async function GET(
         rep_firms_master (
           id,
           name,
-          region_id
+          region_id,
+          entity_type
         )
       `)
       .eq('director_id', id)

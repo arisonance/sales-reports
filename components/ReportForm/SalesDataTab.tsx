@@ -1,47 +1,58 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ReportData } from '@/app/report/page'
-import { RepFirmMaster } from '@/lib/supabase'
+import { useMemo, useRef, useCallback } from 'react'
+import { ReportData, ChannelConfig } from '@/app/report/page'
 
 interface Props {
   data: ReportData
   updateData: (updates: Partial<ReportData>) => void
   directorId?: string
+  channelConfig?: ChannelConfig
 }
 
-export default function SalesDataTab({ data, updateData, directorId }: Props) {
-  const [repFirmOptions, setRepFirmOptions] = useState<RepFirmMaster[]>([])
+const SECTION_LABELS: Record<string, { title: string; singular: string }> = {
+  rep_firm: { title: 'Rep Firm Performance', singular: 'Rep Firm' },
+  distributor: { title: 'Distributor Performance', singular: 'Distributor' },
+  specialty_account: { title: 'Strategic Account Performance', singular: 'Strategic Account' },
+  direct_customer: { title: 'Direct Customer Performance', singular: 'Customer' },
+}
 
-  useEffect(() => {
-    const fetchRepFirmOptions = async () => {
-      if (!directorId) return
-
-      try {
-        // Fetch only rep firms assigned to this director in the setup wizard
-        const res = await fetch(`/api/directors/${directorId}/rep-firms`)
-        if (res.ok) {
-          const data = await res.json()
-          setRepFirmOptions(data)
-        }
-      } catch (err) {
-        console.error('Failed to fetch rep firm options:', err)
-      }
+export default function SalesDataTab({ data, updateData, channelConfig }: Props) {
+  // Determine which entity sections to show based on wizard config
+  const activeSections = useMemo(() => {
+    const sections = [...(channelConfig?.channel_types || [])]
+    if (channelConfig?.uses_direct_customers) {
+      sections.push('direct_customer')
     }
-    fetchRepFirmOptions()
-  }, [directorId])
+    // Backward compatibility: if no config, show rep_firm
+    return sections.length > 0 ? sections : ['rep_firm']
+  }, [channelConfig])
 
-  const addRepFirm = () => {
-    const newRepFirm = {
-      id: Date.now().toString(),
+  // Get dropdown options for a given entity type
+  const getOptionsForType = (entityType: string) => {
+    if (entityType === 'direct_customer') {
+      return channelConfig?.customers?.map(c => ({ id: c.id, name: c.name })) || []
+    }
+    return channelConfig?.entities
+      ?.filter(e => e.entity_type === entityType)
+      .map(e => ({ id: e.id, name: e.name })) || []
+  }
+
+  const idCounter = useRef(0)
+
+  const addEntity = useCallback((entityType: string) => {
+    idCounter.current += 1
+    const newEntity = {
+      id: `new-${idCounter.current}-${Math.random().toString(36).slice(2, 9)}`,
       name: '',
       monthlySales: 0,
       ytdSales: 0,
       percentToGoal: 0,
       yoyGrowth: 0,
+      entityType,
     }
-    updateData({ repFirms: [...data.repFirms, newRepFirm] })
-  }
+    updateData({ repFirms: [...data.repFirms, newEntity] })
+  }, [data.repFirms, updateData])
 
   const updateRepFirm = (id: string, field: string, value: string | number) => {
     const updatedRepFirms = data.repFirms.map((firm) =>
@@ -50,8 +61,9 @@ export default function SalesDataTab({ data, updateData, directorId }: Props) {
     updateData({ repFirms: updatedRepFirms })
   }
 
-  const removeRepFirm = (id: string) => {
-    if (data.repFirms.length <= 1) return
+  const removeRepFirm = (id: string, entityType: string) => {
+    const sameTypeCount = data.repFirms.filter(f => f.entityType === entityType).length
+    if (sameTypeCount <= 1) return
     updateData({ repFirms: data.repFirms.filter((firm) => firm.id !== id) })
   }
 
@@ -141,122 +153,138 @@ export default function SalesDataTab({ data, updateData, directorId }: Props) {
         </div>
       </div>
 
-      <div className="border-t border-card-border pt-6">
-        <h2 className="text-xl font-bold text-foreground mb-4 uppercase tracking-wide">Rep Firm Performance</h2>
+      {/* Dynamic Entity Sections - one per configured channel type */}
+      {activeSections.map((sectionType) => {
+        const sectionEntities = data.repFirms.filter(f => f.entityType === sectionType)
+        const label = SECTION_LABELS[sectionType] || { title: sectionType, singular: sectionType }
+        const options = getOptionsForType(sectionType)
 
-        {data.repFirms.map((firm, index) => (
-          <div key={firm.id} className="bg-sonance-blue/10 rounded-lg p-4 mb-4">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-sm font-semibold text-foreground uppercase tracking-wide">Rep Firm #{index + 1}</span>
-              {data.repFirms.length > 1 && (
-                <button
-                  onClick={() => removeRepFirm(firm.id)}
-                  className="text-red-500 hover:text-red-700 text-sm uppercase tracking-wide"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
+        // If no entities for this section yet, show at least one empty row
+        const entitiesToRender = sectionEntities.length > 0
+          ? sectionEntities
+          : [{ id: `empty-${sectionType}`, name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0, entityType: sectionType }]
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
-                  Rep Firm Name
-                </label>
-                {repFirmOptions.length > 0 ? (
-                  <div className="flex gap-2">
-                    <select
-                      value={firm.name}
-                      onChange={(e) => updateRepFirm(firm.id, 'name', e.target.value)}
-                      className="flex-1 px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+        return (
+          <div key={sectionType} className="border-t border-card-border pt-6">
+            <h2 className="text-xl font-bold text-foreground mb-4 uppercase tracking-wide">{label.title}</h2>
+
+            {entitiesToRender.map((firm, index) => (
+              <div key={firm.id} className="bg-sonance-blue/10 rounded-lg p-4 mb-4">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                    {label.singular} #{index + 1}
+                  </span>
+                  {sectionEntities.length > 1 && (
+                    <button
+                      onClick={() => removeRepFirm(firm.id, sectionType)}
+                      className="text-red-500 hover:text-red-700 text-sm uppercase tracking-wide"
                     >
-                      <option value="">— Select Rep Firm —</option>
-                      {repFirmOptions.map((option) => (
-                        <option key={option.id} value={option.name}>
-                          {option.name}
-                        </option>
-                      ))}
-                      <option value="__custom__">Other (type custom name)</option>
-                    </select>
-                    {firm.name === '__custom__' || (firm.name && !repFirmOptions.some(o => o.name === firm.name)) ? (
+                      Remove
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
+                      {label.singular} Name
+                    </label>
+                    {options.length > 0 ? (
+                      <div className="flex gap-2">
+                        <select
+                          value={firm.name}
+                          onChange={(e) => updateRepFirm(firm.id, 'name', e.target.value)}
+                          className="flex-1 px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                        >
+                          <option value="">&mdash; Select {label.singular} &mdash;</option>
+                          {options.map((option) => (
+                            <option key={option.id} value={option.name}>
+                              {option.name}
+                            </option>
+                          ))}
+                          <option value="__custom__">Other (type custom name)</option>
+                        </select>
+                        {firm.name === '__custom__' || (firm.name && !options.some(o => o.name === firm.name)) ? (
+                          <input
+                            type="text"
+                            value={firm.name === '__custom__' ? '' : firm.name}
+                            onChange={(e) => updateRepFirm(firm.id, 'name', e.target.value)}
+                            placeholder={`Enter ${label.singular.toLowerCase()} name`}
+                            className="flex-1 px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                          />
+                        ) : null}
+                      </div>
+                    ) : (
                       <input
                         type="text"
-                        value={firm.name === '__custom__' ? '' : firm.name}
+                        value={firm.name}
                         onChange={(e) => updateRepFirm(firm.id, 'name', e.target.value)}
-                        placeholder="Enter rep firm name"
-                        className="flex-1 px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                        placeholder={`e.g., ${sectionType === 'rep_firm' ? 'Pro Tech' : sectionType === 'distributor' ? 'Mexico Distribution Co' : sectionType === 'specialty_account' ? 'Strategic Partner Inc' : 'Acme Corporation'}`}
+                        className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
                       />
-                    ) : null}
+                    )}
                   </div>
-                ) : (
-                  <input
-                    type="text"
-                    value={firm.name}
-                    onChange={(e) => updateRepFirm(firm.id, 'name', e.target.value)}
-                    placeholder="e.g., Pro Tech"
-                    className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
-                  />
-                )}
-              </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
-                  Monthly Sales ($)
-                </label>
-                <input
-                  type="text"
-                  value={formatNumber(firm.monthlySales)}
-                  onChange={(e) => updateRepFirm(firm.id, 'monthlySales', parseNumber(e.target.value))}
-                  className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
+                      Monthly Sales ($)
+                    </label>
+                    <input
+                      type="text"
+                      value={formatNumber(firm.monthlySales)}
+                      onChange={(e) => updateRepFirm(firm.id, 'monthlySales', parseNumber(e.target.value))}
+                      className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
-                  YTD Sales ($)
-                </label>
-                <input
-                  type="text"
-                  value={formatNumber(firm.ytdSales)}
-                  onChange={(e) => updateRepFirm(firm.id, 'ytdSales', parseNumber(e.target.value))}
-                  className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
+                      YTD Sales ($)
+                    </label>
+                    <input
+                      type="text"
+                      value={formatNumber(firm.ytdSales)}
+                      onChange={(e) => updateRepFirm(firm.id, 'ytdSales', parseNumber(e.target.value))}
+                      className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
-                  % to Goal
-                </label>
-                <input
-                  type="number"
-                  value={firm.percentToGoal}
-                  onChange={(e) => updateRepFirm(firm.id, 'percentToGoal', parseFloat(e.target.value) || 0)}
-                  className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
+                      % to Goal
+                    </label>
+                    <input
+                      type="number"
+                      value={firm.percentToGoal}
+                      onChange={(e) => updateRepFirm(firm.id, 'percentToGoal', parseFloat(e.target.value) || 0)}
+                      className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
-                  YoY Growth %
-                </label>
-                <input
-                  type="number"
-                  value={firm.yoyGrowth}
-                  onChange={(e) => updateRepFirm(firm.id, 'yoyGrowth', parseFloat(e.target.value) || 0)}
-                  className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
-                />
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
+                      YoY Growth %
+                    </label>
+                    <input
+                      type="number"
+                      value={firm.yoyGrowth}
+                      onChange={(e) => updateRepFirm(firm.id, 'yoyGrowth', parseFloat(e.target.value) || 0)}
+                      className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
+
+            <button
+              onClick={() => addEntity(sectionType)}
+              className="px-4 py-2 bg-sonance-green text-white rounded-lg hover:bg-sonance-green/90 transition-colors font-semibold uppercase tracking-wide"
+            >
+              + Add Another {label.singular}
+            </button>
           </div>
-        ))}
-
-        <button
-          onClick={addRepFirm}
-          className="px-4 py-2 bg-sonance-green text-white rounded-lg hover:bg-sonance-green/90 transition-colors font-semibold uppercase tracking-wide"
-        >
-          + Add Another Rep Firm
-        </button>
-      </div>
+        )
+      })}
     </div>
   )
 }
