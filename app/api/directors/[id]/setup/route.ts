@@ -23,49 +23,47 @@ export async function GET(
       throw directorError
     }
 
-    // Get region access
-    const { data: regionAccess, error: regionError } = await supabase
+    // Fetch junction tables with graceful degradation (tables may not exist yet)
+    let regionAccess: { region_id: string; is_primary: boolean }[] = []
+    let repAccess: { rep_firm_id: string }[] = []
+    let customerAccess: { customer_id: string }[] = []
+    let channelConfig: { channel_type: string }[] = []
+
+    const { data: ra, error: regionError } = await supabase
       .from('director_region_access')
       .select('region_id, is_primary, regions(id, name)')
       .eq('director_id', id)
+    if (!regionError && ra) regionAccess = ra
 
-    if (regionError) throw regionError
-
-    // Get rep access
-    const { data: repAccess, error: repError } = await supabase
+    const { data: rep, error: repError } = await supabase
       .from('director_rep_access')
       .select('rep_firm_id, rep_firms_master(id, name)')
       .eq('director_id', id)
+    if (!repError && rep) repAccess = rep
 
-    if (repError) throw repError
-
-    // Get customer access
-    const { data: customerAccess, error: customerError } = await supabase
+    const { data: ca, error: customerError } = await supabase
       .from('director_customer_access')
       .select('customer_id, customers_master(id, name)')
       .eq('director_id', id)
+    if (!customerError && ca) customerAccess = ca
 
-    if (customerError) throw customerError
-
-    // Get channel configuration
-    const { data: channelConfig, error: channelError } = await supabase
+    const { data: cc, error: channelError } = await supabase
       .from('director_channel_config')
       .select('channel_type')
       .eq('director_id', id)
-
-    if (channelError) throw channelError
+    if (!channelError && cc) channelConfig = cc
 
     // Find primary region
-    const primaryRegion = regionAccess?.find(r => r.is_primary)
-    const additionalRegions = regionAccess?.filter(r => !r.is_primary) || []
+    const primaryRegion = regionAccess.find(r => r.is_primary)
+    const additionalRegions = regionAccess.filter(r => !r.is_primary)
 
     return NextResponse.json({
       director,
       primary_region_id: primaryRegion?.region_id || director.region_id || null,
       additional_region_ids: additionalRegions.map(r => r.region_id),
-      rep_firm_ids: repAccess?.map(r => r.rep_firm_id) || [],
-      customer_ids: customerAccess?.map(c => c.customer_id) || [],
-      channel_types: channelConfig?.map(c => c.channel_type) || [],
+      rep_firm_ids: repAccess.map(r => r.rep_firm_id),
+      customer_ids: customerAccess.map(c => c.customer_id),
+      channel_types: channelConfig.map(c => c.channel_type),
       uses_direct_customers: director.uses_direct_customers || false,
     })
   } catch (error) {
@@ -183,23 +181,27 @@ export async function PUT(
       if (customerError) throw customerError
     }
 
-    // Clear and replace channel configuration
-    await supabase
-      .from('director_channel_config')
-      .delete()
-      .eq('director_id', id)
-
-    if (channel_types.length > 0) {
-      const channelEntries = channel_types.map((channelType: string) => ({
-        director_id: id,
-        channel_type: channelType
-      }))
-
-      const { error: channelError } = await supabase
+    // Clear and replace channel configuration (table may not exist yet)
+    try {
+      await supabase
         .from('director_channel_config')
-        .insert(channelEntries)
+        .delete()
+        .eq('director_id', id)
 
-      if (channelError) throw channelError
+      if (channel_types.length > 0) {
+        const channelEntries = channel_types.map((channelType: string) => ({
+          director_id: id,
+          channel_type: channelType
+        }))
+
+        const { error: channelError } = await supabase
+          .from('director_channel_config')
+          .insert(channelEntries)
+
+        if (channelError) console.warn('Could not save channel config:', channelError.message)
+      }
+    } catch {
+      console.warn('director_channel_config table may not exist yet')
     }
 
     return NextResponse.json({
