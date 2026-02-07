@@ -24,8 +24,8 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
     if (channelConfig?.uses_direct_customers) {
       sections.push('direct_customer')
     }
-    // Backward compatibility: if no config, show rep_firm
-    return sections.length > 0 ? sections : ['rep_firm']
+    // No channels configured: show all entity types for flexibility
+    return sections.length > 0 ? sections : ['rep_firm', 'distributor', 'specialty_account']
   }, [channelConfig])
 
   // Get dropdown options for a given entity type

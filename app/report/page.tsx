@@ -281,6 +281,15 @@ export default function ReportPage() {
                 }
               }
 
+              // No channels configured: create one empty row per entity type for flexibility
+              if (prePopulatedEntities.length === 0 && fetchedChannelConfig.channel_types.length === 0 && !fetchedChannelConfig.uses_direct_customers) {
+                prePopulatedEntities.push(
+                  { id: 'default-rf', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0, entityType: 'rep_firm' },
+                  { id: 'default-dist', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0, entityType: 'distributor' },
+                  { id: 'default-sa', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0, entityType: 'specialty_account' },
+                )
+              }
+
               setReportData(prev => ({
                 ...prev,
                 directorId: director.id,

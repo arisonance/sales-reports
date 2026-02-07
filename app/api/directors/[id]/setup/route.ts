@@ -181,27 +181,23 @@ export async function PUT(
       if (customerError) throw customerError
     }
 
-    // Clear and replace channel configuration (table may not exist yet)
-    try {
-      await supabase
+    // Clear and replace channel configuration
+    await supabase
+      .from('director_channel_config')
+      .delete()
+      .eq('director_id', id)
+
+    if (channel_types.length > 0) {
+      const channelEntries = channel_types.map((channelType: string) => ({
+        director_id: id,
+        channel_type: channelType
+      }))
+
+      const { error: channelError } = await supabase
         .from('director_channel_config')
-        .delete()
-        .eq('director_id', id)
+        .insert(channelEntries)
 
-      if (channel_types.length > 0) {
-        const channelEntries = channel_types.map((channelType: string) => ({
-          director_id: id,
-          channel_type: channelType
-        }))
-
-        const { error: channelError } = await supabase
-          .from('director_channel_config')
-          .insert(channelEntries)
-
-        if (channelError) console.warn('Could not save channel config:', channelError.message)
-      }
-    } catch {
-      console.warn('director_channel_config table may not exist yet')
+      if (channelError) throw channelError
     }
 
     return NextResponse.json({
