@@ -466,12 +466,6 @@ export default function SetupWizardPage() {
       return
     }
 
-    // Validate at least one channel type is selected
-    if (channelTypes.length === 0 && !usesDirectCustomers) {
-      setError('Please select at least one sales channel type')
-      return
-    }
-
     setError('')
     setSuccess('')
     setSaving(true)

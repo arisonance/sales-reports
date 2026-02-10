@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 
 // Tab components
@@ -135,6 +135,13 @@ export default function ReportPage() {
     entities: [],
     customers: [],
   })
+
+  // Filter out Sales Data tab when no sales channels are configured
+  const hasSalesChannels = channelConfig.channel_types.length > 0 || channelConfig.uses_direct_customers
+  const visibleTabs = useMemo(() =>
+    tabs.filter(tab => tab.id !== 'sales' || hasSalesChannels),
+    [hasSalesChannels]
+  )
 
   // Copy from previous report state
   const [previousReportData, setPreviousReportData] = useState<PreviousReportData | null>(null)
@@ -602,7 +609,7 @@ export default function ReportPage() {
         {/* Tab Navigation */}
         <div className="bg-card-bg px-4 sm:px-6 pt-4 border-b border-card-border">
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-            {tabs.map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}

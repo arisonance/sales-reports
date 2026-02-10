@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -106,6 +106,12 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hasSalesChannels, setHasSalesChannels] = useState(true)
+
+  const visibleTabs = useMemo(() =>
+    tabs.filter(tab => tab.id !== 'sales' || hasSalesChannels),
+    [hasSalesChannels]
+  )
 
   useEffect(() => {
     // Check admin auth
@@ -190,6 +196,20 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
       })
 
       setEditHistory(data.editHistory || [])
+
+      // Fetch channel config to determine if Sales Data tab should be visible
+      const directorId = data.directors?.id
+      if (directorId) {
+        try {
+          const channelRes = await fetch(`/api/directors/${directorId}/channel-config`)
+          if (channelRes.ok) {
+            const config = await channelRes.json()
+            setHasSalesChannels(config.channel_types?.length > 0 || config.uses_direct_customers)
+          }
+        } catch (err) {
+          console.error('Failed to fetch channel config:', err)
+        }
+      }
     } catch (err) {
       console.error('Failed to load report:', err)
       setError('Failed to load report')
@@ -379,7 +399,7 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
         {/* Tab Navigation */}
         <div className="bg-card-bg rounded-t-lg px-4 pt-4 border-b border-card-border">
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
-            {tabs.map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
