@@ -9,6 +9,7 @@ import WinsHighlightsTab from '@/components/ReportForm/WinsHighlightsTab'
 import SalesDataTab from '@/components/ReportForm/SalesDataTab'
 import CompetitionTab from '@/components/ReportForm/CompetitionTab'
 import MarketingEventsTab from '@/components/ReportForm/MarketingEventsTab'
+import KeyInitiativesTab from '@/components/ReportForm/KeyInitiativesTab'
 import CopyFromPreviousBanner from '@/components/ReportForm/CopyFromPreviousBanner'
 import CopyFromPreviousModal from '@/components/ReportForm/CopyFromPreviousModal'
 
@@ -17,6 +18,7 @@ const tabs = [
   { id: 'wins', label: 'Highlights & Wins', shortLabel: 'Wins' },
   { id: 'sales', label: 'Sales Data', shortLabel: 'Sales' },
   { id: 'competition', label: 'Competition & Industry', shortLabel: 'Competition' },
+  { id: 'initiatives', label: 'Key Initiatives', shortLabel: 'Initiatives' },
   { id: 'marketing', label: 'Photos & Events', shortLabel: 'Photos' },
 ]
 
@@ -526,6 +528,8 @@ export default function ReportPage() {
         return <SalesDataTab data={reportData} updateData={updateReportData} directorId={reportData.directorId} channelConfig={channelConfig} />
       case 'competition':
         return <CompetitionTab data={reportData} updateData={updateReportData} />
+      case 'initiatives':
+        return <KeyInitiativesTab data={reportData} updateData={updateReportData} />
       case 'marketing':
         return <MarketingEventsTab data={reportData} updateData={updateReportData} />
       default:

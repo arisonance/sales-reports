@@ -60,6 +60,7 @@ export async function POST(request: Request) {
       keyInitiatives: keyInitiatives || null,
       marketingEvents: marketingEvents || null,
       marketTrends: marketTrends?.observations || '',
+      industryInfo: marketTrends?.industry_info || '',
       followUps: followUps?.content || '',
       photos: photos || [],
       goodJobs: goodJobs || []

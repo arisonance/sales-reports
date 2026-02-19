@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const { directorId, month, executiveSummary, status, wins, repFirms, competitors,
-            regionalPerformance, keyInitiatives, marketingEvents, marketTrends, followUps, goodJobs } = body
+            regionalPerformance, keyInitiatives, marketingEvents, marketTrends, industryInfo, followUps, goodJobs } = body
 
     // Check if report already exists for this director/month
     const { data: existingReport } = await supabase
@@ -162,12 +162,12 @@ export async function POST(request: Request) {
       }, { onConflict: 'report_id' })
     }
 
-    // Market Trends (upsert)
-    if (marketTrends !== undefined) {
-      await supabase.from('market_trends').upsert({
-        report_id: reportId,
-        observations: marketTrends
-      }, { onConflict: 'report_id' })
+    // Market Trends + Industry Info (upsert)
+    if (marketTrends !== undefined || industryInfo !== undefined) {
+      const trendData: Record<string, unknown> = { report_id: reportId }
+      if (marketTrends !== undefined) trendData.observations = marketTrends
+      if (industryInfo !== undefined) trendData.industry_info = industryInfo
+      await supabase.from('market_trends').upsert(trendData, { onConflict: 'report_id' })
     }
 
     // Follow Ups (upsert)

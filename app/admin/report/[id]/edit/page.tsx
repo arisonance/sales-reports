@@ -10,12 +10,14 @@ import WinsHighlightsTab from '@/components/ReportForm/WinsHighlightsTab'
 import SalesDataTab from '@/components/ReportForm/SalesDataTab'
 import CompetitionTab from '@/components/ReportForm/CompetitionTab'
 import MarketingEventsTab from '@/components/ReportForm/MarketingEventsTab'
+import KeyInitiativesTab from '@/components/ReportForm/KeyInitiativesTab'
 
 const tabs = [
   { id: 'basic', label: 'Basic Info', shortLabel: 'Info' },
   { id: 'wins', label: 'Highlights & Wins', shortLabel: 'Wins' },
   { id: 'sales', label: 'Sales Data', shortLabel: 'Sales' },
   { id: 'competition', label: 'Competition & Industry', shortLabel: 'Competition' },
+  { id: 'initiatives', label: 'Key Initiatives', shortLabel: 'Initiatives' },
   { id: 'marketing', label: 'Photos & Events', shortLabel: 'Photos' },
 ]
 
@@ -179,7 +181,7 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
             }))
           : [{ id: '1', name: '', whatWereSeeing: '', ourResponse: '' }],
         marketTrends: data.marketTrends || '',
-        industryInfo: '',
+        industryInfo: data.industryInfo || '',
         keyProjects: data.keyInitiatives?.key_projects || '',
         distributionUpdates: data.keyInitiatives?.distribution_updates || '',
         challengesBlockers: data.keyInitiatives?.challenges_blockers || '',
@@ -250,6 +252,8 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
           marketingCampaigns: reportData.marketingCampaigns,
         },
         marketTrends: reportData.marketTrends,
+        industryInfo: reportData.industryInfo,
+        goodJobs: reportData.goodJobs,
         editReason: editReason || null,
       }
 
@@ -289,6 +293,8 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
         return <SalesDataTab data={reportData} updateData={updateReportData} />
       case 'competition':
         return <CompetitionTab data={reportData} updateData={updateReportData} />
+      case 'initiatives':
+        return <KeyInitiativesTab data={reportData} updateData={updateReportData} />
       case 'marketing':
         return <MarketingEventsTab data={reportData} updateData={updateReportData} />
       default:

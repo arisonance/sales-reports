@@ -35,12 +35,14 @@ interface ReportData {
     ourResponse: string
   }>
   marketTrends: string
+  industryInfo: string
   keyProjects: string
   distributionUpdates: string
   challengesBlockers: string
   eventsAttended: string
   marketingCampaigns: string
   photos: Array<{ id: string; filename: string; url: string }>
+  goodJobs: Array<{ id: string; personName: string; reason: string }>
 }
 
 export default function ViewReport() {
@@ -121,12 +123,22 @@ export default function ViewReport() {
           ourResponse: c.our_response || ''
         })),
         marketTrends: data.marketTrends || '',
+        industryInfo: data.industryInfo || '',
         keyProjects: data.keyInitiatives?.key_projects || '',
         distributionUpdates: data.keyInitiatives?.distribution_updates || '',
         challengesBlockers: data.keyInitiatives?.challenges_blockers || '',
         eventsAttended: data.marketingEvents?.events_attended || '',
         marketingCampaigns: data.marketingEvents?.marketing_campaigns || '',
-        photos: data.photos || []
+        photos: data.photos || [],
+        goodJobs: (data.goodJobs || []).map((g: {
+          id: string
+          person_name: string
+          reason: string
+        }) => ({
+          id: g.id,
+          personName: g.person_name,
+          reason: g.reason || ''
+        })),
       })
     } catch (error) {
       console.error('Failed to fetch report:', error)
@@ -241,36 +253,38 @@ export default function ViewReport() {
           </div>
         )}
 
-        {/* Sales Performance */}
-        <div className="bg-card-bg rounded-lg shadow p-6">
-          <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Regional Performance</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="bg-sonance-blue/10 rounded-lg p-4">
-              <p className="text-sm text-foreground opacity-60">Monthly Sales</p>
-              <p className="text-xl font-bold text-sonance-blue">{formatCurrency(report.monthlySales)}</p>
-              <p className="text-xs text-muted-foreground">Goal: {formatCurrency(report.monthlyGoal)}</p>
-            </div>
-            <div className="bg-sonance-green/10 rounded-lg p-4">
-              <p className="text-sm text-foreground opacity-60">YTD Sales</p>
-              <p className="text-xl font-bold text-sonance-green">{formatCurrency(report.ytdSales)}</p>
-              <p className="text-xs text-muted-foreground">Goal: {formatCurrency(report.ytdGoal)}</p>
-            </div>
-            <div className="bg-muted/30 rounded-lg p-4">
-              <p className="text-sm text-foreground opacity-60">Open Orders</p>
-              <p className="text-xl font-bold text-foreground">{formatCurrency(report.openOrders)}</p>
-            </div>
-            <div className="bg-muted/20 rounded-lg p-4">
-              <p className="text-sm text-foreground opacity-60">Pipeline</p>
-              <p className="text-xl font-bold text-foreground">{formatCurrency(report.pipeline)}</p>
-            </div>
-            <div className="bg-muted/20 rounded-lg p-4">
-              <p className="text-sm text-foreground opacity-60">% to Monthly Goal</p>
-              <p className="text-xl font-bold text-foreground">
-                {report.monthlyGoal > 0 ? Math.round((report.monthlySales / report.monthlyGoal) * 100) : 0}%
-              </p>
+        {/* Sales Performance - only show if any data exists */}
+        {(report.monthlySales > 0 || report.monthlyGoal > 0 || report.ytdSales > 0 || report.ytdGoal > 0 || report.openOrders > 0 || report.pipeline > 0) && (
+          <div className="bg-card-bg rounded-lg shadow p-6">
+            <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Regional Performance</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="bg-sonance-blue/10 rounded-lg p-4">
+                <p className="text-sm text-foreground opacity-60">Monthly Sales</p>
+                <p className="text-xl font-bold text-sonance-blue">{formatCurrency(report.monthlySales)}</p>
+                <p className="text-xs text-muted-foreground">Goal: {formatCurrency(report.monthlyGoal)}</p>
+              </div>
+              <div className="bg-sonance-green/10 rounded-lg p-4">
+                <p className="text-sm text-foreground opacity-60">YTD Sales</p>
+                <p className="text-xl font-bold text-sonance-green">{formatCurrency(report.ytdSales)}</p>
+                <p className="text-xs text-muted-foreground">Goal: {formatCurrency(report.ytdGoal)}</p>
+              </div>
+              <div className="bg-muted/30 rounded-lg p-4">
+                <p className="text-sm text-foreground opacity-60">Open Orders</p>
+                <p className="text-xl font-bold text-foreground">{formatCurrency(report.openOrders)}</p>
+              </div>
+              <div className="bg-muted/20 rounded-lg p-4">
+                <p className="text-sm text-foreground opacity-60">Pipeline</p>
+                <p className="text-xl font-bold text-foreground">{formatCurrency(report.pipeline)}</p>
+              </div>
+              <div className="bg-muted/20 rounded-lg p-4">
+                <p className="text-sm text-foreground opacity-60">% to Monthly Goal</p>
+                <p className="text-xl font-bold text-foreground">
+                  {report.monthlyGoal > 0 ? Math.round((report.monthlySales / report.monthlyGoal) * 100) : 0}%
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Entity Performance Sections - grouped by type */}
         {(() => {
@@ -332,17 +346,19 @@ export default function ViewReport() {
                 </div>
               ))}
             </div>
-            {report.followUps && (
-              <div className="mt-6 pt-4 border-t border-card-border">
-                <h3 className="font-medium text-foreground mb-2">Follow-ups & Working On</h3>
-                <p className="text-foreground opacity-80 text-sm whitespace-pre-wrap">{report.followUps}</p>
-              </div>
-            )}
+          </div>
+        )}
+
+        {/* Follow-ups - shown independently from wins */}
+        {report.followUps && (
+          <div className="bg-card-bg rounded-lg shadow p-6">
+            <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Follow-ups & Working On</h2>
+            <p className="text-foreground opacity-80 text-sm whitespace-pre-wrap">{report.followUps}</p>
           </div>
         )}
 
         {/* Competition */}
-        {(report.competitors.length > 0 && report.competitors.some(c => c.name)) || report.marketTrends ? (
+        {(report.competitors.length > 0 && report.competitors.some(c => c.name)) || report.marketTrends || report.industryInfo ? (
           <div className="bg-card-bg rounded-lg shadow p-6">
             <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Competitive Intelligence</h2>
             {report.competitors.filter(c => c.name).length > 0 && (
@@ -368,6 +384,12 @@ export default function ViewReport() {
               <div className={report.competitors.filter(c => c.name).length > 0 ? "mt-6 pt-4 border-t border-card-border" : ""}>
                 <h3 className="font-medium text-foreground mb-2">Market Trends</h3>
                 <p className="text-foreground opacity-80 text-sm whitespace-pre-wrap">{report.marketTrends}</p>
+              </div>
+            )}
+            {report.industryInfo && (
+              <div className={(report.competitors.filter(c => c.name).length > 0 || report.marketTrends) ? "mt-6 pt-4 border-t border-card-border" : ""}>
+                <h3 className="font-medium text-foreground mb-2">Industry Info</h3>
+                <p className="text-foreground opacity-80 text-sm whitespace-pre-wrap">{report.industryInfo}</p>
               </div>
             )}
           </div>
@@ -417,6 +439,23 @@ export default function ViewReport() {
                   <p className="text-foreground opacity-80 text-sm mt-1 whitespace-pre-wrap">{report.marketingCampaigns}</p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Good Jobs / Peer Recognition */}
+        {report.goodJobs.length > 0 && report.goodJobs.some(g => g.personName) && (
+          <div className="bg-card-bg rounded-lg shadow p-6">
+            <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Good Job! Peer Recognition</h2>
+            <div className="space-y-4">
+              {report.goodJobs.filter(g => g.personName).map((gj) => (
+                <div key={gj.id} className="border-l-4 border-sonance-green pl-4">
+                  <h3 className="font-medium text-foreground">{gj.personName}</h3>
+                  {gj.reason && (
+                    <p className="text-foreground opacity-80 text-sm mt-1">{gj.reason}</p>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}

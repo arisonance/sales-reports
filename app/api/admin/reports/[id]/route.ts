@@ -161,6 +161,7 @@ export async function GET(
       { data: marketTrends },
       { data: followUps },
       { data: photos },
+      { data: goodJobs },
       { data: editHistory }
     ] = await Promise.all([
       supabase.from('wins').select('*').eq('report_id', id),
@@ -172,6 +173,7 @@ export async function GET(
       supabase.from('market_trends').select('*').eq('report_id', id).single(),
       supabase.from('follow_ups').select('*').eq('report_id', id).single(),
       supabase.from('photos').select('*').eq('report_id', id),
+      supabase.from('good_jobs').select('*').eq('report_id', id),
       supabase.from('report_edit_history').select('*').eq('report_id', id).order('edited_at', { ascending: false })
     ])
 
@@ -184,8 +186,10 @@ export async function GET(
       keyInitiatives: keyInitiatives || null,
       marketingEvents: marketingEvents || null,
       marketTrends: marketTrends?.observations || '',
+      industryInfo: marketTrends?.industry_info || '',
       followUps: followUps?.content || '',
       photos: photos || [],
+      goodJobs: goodJobs || [],
       editHistory: editHistory || []
     }
 
@@ -206,7 +210,7 @@ export async function PUT(
     const body = await request.json()
     const { executiveSummary, wins, repFirms, competitors,
             regionalPerformance, keyInitiatives, marketingEvents,
-            marketTrends, followUps, editReason } = body
+            marketTrends, industryInfo, followUps, goodJobs, editReason } = body
 
     // First, fetch current state for change detection
     const [
@@ -376,12 +380,12 @@ export async function PUT(
       }, { onConflict: 'report_id' })
     }
 
-    // Market Trends (upsert)
-    if (marketTrends !== undefined) {
-      await supabase.from('market_trends').upsert({
-        report_id: id,
-        observations: marketTrends
-      }, { onConflict: 'report_id' })
+    // Market Trends + Industry Info (upsert)
+    if (marketTrends !== undefined || industryInfo !== undefined) {
+      const trendData: Record<string, unknown> = { report_id: id }
+      if (marketTrends !== undefined) trendData.observations = marketTrends
+      if (industryInfo !== undefined) trendData.industry_info = industryInfo
+      await supabase.from('market_trends').upsert(trendData, { onConflict: 'report_id' })
     }
 
     // Follow Ups (upsert)
@@ -390,6 +394,19 @@ export async function PUT(
         report_id: id,
         content: followUps
       }, { onConflict: 'report_id' })
+    }
+
+    // Good Jobs
+    if (goodJobs && goodJobs.length > 0) {
+      await supabase.from('good_jobs').delete().eq('report_id', id)
+      const goodJobsData = goodJobs.filter((g: { personName: string }) => g.personName).map((g: { personName: string; reason: string }) => ({
+        report_id: id,
+        person_name: g.personName,
+        reason: g.reason
+      }))
+      if (goodJobsData.length > 0) {
+        await supabase.from('good_jobs').insert(goodJobsData)
+      }
     }
 
     // Record edit history if there were changes

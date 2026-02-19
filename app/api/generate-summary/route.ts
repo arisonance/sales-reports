@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+const apiKey = process.env.ANTHROPIC_API_KEY
+
+const anthropic = apiKey ? new Anthropic({ apiKey }) : null
 
 interface ReportData {
   directorName: string
@@ -132,6 +132,14 @@ function formatReportForPrompt(data: ReportData): string {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!anthropic) {
+      console.error('ANTHROPIC_API_KEY is not configured')
+      return NextResponse.json(
+        { error: 'AI service is not configured. Please contact your administrator.' },
+        { status: 503 }
+      )
+    }
+
     const reportData: ReportData = await request.json()
 
     const formattedReport = formatReportForPrompt(reportData)
@@ -145,7 +153,7 @@ export async function POST(request: NextRequest) {
     }
 
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-5-20251101',
+      model: 'claude-sonnet-4-5-20250514',
       max_tokens: 1024,
       messages: [
         {
@@ -172,8 +180,26 @@ ${formattedReport}`
     const summary = textContent ? textContent.text : ''
 
     return NextResponse.json({ summary })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error generating summary:', error)
+
+    // Surface specific Anthropic API errors
+    if (error && typeof error === 'object' && 'status' in error) {
+      const apiError = error as { status: number; message?: string }
+      if (apiError.status === 401) {
+        return NextResponse.json(
+          { error: 'AI service authentication failed. Please contact your administrator.' },
+          { status: 503 }
+        )
+      }
+      if (apiError.status === 429) {
+        return NextResponse.json(
+          { error: 'AI service is temporarily busy. Please wait a moment and try again.' },
+          { status: 429 }
+        )
+      }
+    }
+
     return NextResponse.json(
       { error: 'Failed to generate summary. Please try again.' },
       { status: 500 }

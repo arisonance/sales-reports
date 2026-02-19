@@ -34,7 +34,8 @@ export async function GET(
       { data: marketingEvents },
       { data: marketTrends },
       { data: followUps },
-      { data: photos }
+      { data: photos },
+      { data: goodJobs }
     ] = await Promise.all([
       supabase.from('wins').select('*').eq('report_id', id),
       supabase.from('rep_firms').select('*').eq('report_id', id),
@@ -44,7 +45,8 @@ export async function GET(
       supabase.from('marketing_events').select('*').eq('report_id', id).single(),
       supabase.from('market_trends').select('*').eq('report_id', id).single(),
       supabase.from('follow_ups').select('*').eq('report_id', id).single(),
-      supabase.from('photos').select('*').eq('report_id', id)
+      supabase.from('photos').select('*').eq('report_id', id),
+      supabase.from('good_jobs').select('*').eq('report_id', id)
     ])
 
     // Construct full report response
@@ -57,8 +59,10 @@ export async function GET(
       keyInitiatives: keyInitiatives || null,
       marketingEvents: marketingEvents || null,
       marketTrends: marketTrends?.observations || '',
+      industryInfo: marketTrends?.industry_info || '',
       followUps: followUps?.content || '',
-      photos: photos || []
+      photos: photos || [],
+      goodJobs: goodJobs || []
     }
 
     return NextResponse.json(fullReport)
@@ -102,7 +106,8 @@ export async function POST(request: Request) {
       { data: marketingEvents },
       { data: marketTrends },
       { data: followUps },
-      { data: photos }
+      { data: photos },
+      { data: goodJobs }
     ] = await Promise.all([
       supabase.from('wins').select('*').eq('report_id', report.id),
       supabase.from('rep_firms').select('*').eq('report_id', report.id),
@@ -112,7 +117,8 @@ export async function POST(request: Request) {
       supabase.from('marketing_events').select('*').eq('report_id', report.id).single(),
       supabase.from('market_trends').select('*').eq('report_id', report.id).single(),
       supabase.from('follow_ups').select('*').eq('report_id', report.id).single(),
-      supabase.from('photos').select('*').eq('report_id', report.id)
+      supabase.from('photos').select('*').eq('report_id', report.id),
+      supabase.from('good_jobs').select('*').eq('report_id', report.id)
     ])
 
     const fullReport = {
@@ -125,8 +131,10 @@ export async function POST(request: Request) {
       keyInitiatives: keyInitiatives || null,
       marketingEvents: marketingEvents || null,
       marketTrends: marketTrends?.observations || '',
+      industryInfo: marketTrends?.industry_info || '',
       followUps: followUps?.content || '',
-      photos: photos || []
+      photos: photos || [],
+      goodJobs: goodJobs || []
     }
 
     return NextResponse.json(fullReport)
