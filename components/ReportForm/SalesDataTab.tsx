@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useCallback } from 'react'
 import { ReportData, ChannelConfig } from '@/app/report/page'
+import CurrencyInput from './CurrencyInput'
 
 interface Props {
   data: ReportData
@@ -43,7 +44,7 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
   const addEntity = useCallback((entityType: string) => {
     idCounter.current += 1
     const newEntity = {
-      id: `new-${idCounter.current}-${Math.random().toString(36).slice(2, 9)}`,
+      id: `new-add-${idCounter.current}`,
       name: '',
       monthlySales: 0,
       ytdSales: 0,
@@ -55,6 +56,23 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
   }, [data.repFirms, updateData])
 
   const updateRepFirm = (id: string, field: string, value: string | number) => {
+    // Handle phantom entity - promote to real entity on first interaction
+    if (id.startsWith('empty-')) {
+      const entityType = id.replace('empty-', '')
+      idCounter.current += 1
+      const newEntity = {
+        id: `new-promote-${idCounter.current}`,
+        name: field === 'name' ? String(value) : '',
+        monthlySales: field === 'monthlySales' ? Number(value) : 0,
+        ytdSales: field === 'ytdSales' ? Number(value) : 0,
+        percentToGoal: field === 'percentToGoal' ? Number(value) : 0,
+        yoyGrowth: field === 'yoyGrowth' ? Number(value) : 0,
+        entityType,
+      }
+      updateData({ repFirms: [...data.repFirms, newEntity] })
+      return
+    }
+
     const updatedRepFirms = data.repFirms.map((firm) =>
       firm.id === id ? { ...firm, [field]: value } : firm
     )
@@ -67,14 +85,6 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
     updateData({ repFirms: data.repFirms.filter((firm) => firm.id !== id) })
   }
 
-  const formatNumber = (value: number) => {
-    return value.toLocaleString('en-US')
-  }
-
-  const parseNumber = (value: string) => {
-    return parseInt(value.replace(/,/g, '')) || 0
-  }
-
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-foreground uppercase tracking-wide">Regional Performance</h2>
@@ -84,10 +94,9 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
           <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
             Monthly Sales ($)
           </label>
-          <input
-            type="text"
-            value={formatNumber(data.monthlySales)}
-            onChange={(e) => updateData({ monthlySales: parseNumber(e.target.value) })}
+          <CurrencyInput
+            value={data.monthlySales}
+            onChange={(val) => updateData({ monthlySales: val })}
             className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
           />
         </div>
@@ -96,10 +105,9 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
           <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
             Monthly Goal ($)
           </label>
-          <input
-            type="text"
-            value={formatNumber(data.monthlyGoal)}
-            onChange={(e) => updateData({ monthlyGoal: parseNumber(e.target.value) })}
+          <CurrencyInput
+            value={data.monthlyGoal}
+            onChange={(val) => updateData({ monthlyGoal: val })}
             className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
           />
         </div>
@@ -108,10 +116,9 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
           <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
             YTD Sales ($)
           </label>
-          <input
-            type="text"
-            value={formatNumber(data.ytdSales)}
-            onChange={(e) => updateData({ ytdSales: parseNumber(e.target.value) })}
+          <CurrencyInput
+            value={data.ytdSales}
+            onChange={(val) => updateData({ ytdSales: val })}
             className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
           />
         </div>
@@ -120,10 +127,9 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
           <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
             YTD Goal ($)
           </label>
-          <input
-            type="text"
-            value={formatNumber(data.ytdGoal)}
-            onChange={(e) => updateData({ ytdGoal: parseNumber(e.target.value) })}
+          <CurrencyInput
+            value={data.ytdGoal}
+            onChange={(val) => updateData({ ytdGoal: val })}
             className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
           />
         </div>
@@ -132,10 +138,9 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
           <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
             Open Orders ($)
           </label>
-          <input
-            type="text"
-            value={formatNumber(data.openOrders)}
-            onChange={(e) => updateData({ openOrders: parseNumber(e.target.value) })}
+          <CurrencyInput
+            value={data.openOrders}
+            onChange={(val) => updateData({ openOrders: val })}
             className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
           />
         </div>
@@ -144,10 +149,9 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
           <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
             Pipeline ($)
           </label>
-          <input
-            type="text"
-            value={formatNumber(data.pipeline)}
-            onChange={(e) => updateData({ pipeline: parseNumber(e.target.value) })}
+          <CurrencyInput
+            value={data.pipeline}
+            onChange={(val) => updateData({ pipeline: val })}
             className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
           />
         </div>
@@ -229,10 +233,9 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
                     <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
                       Monthly Sales ($)
                     </label>
-                    <input
-                      type="text"
-                      value={formatNumber(firm.monthlySales)}
-                      onChange={(e) => updateRepFirm(firm.id, 'monthlySales', parseNumber(e.target.value))}
+                    <CurrencyInput
+                      value={firm.monthlySales}
+                      onChange={(val) => updateRepFirm(firm.id, 'monthlySales', val)}
                       className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
                     />
                   </div>
@@ -241,10 +244,9 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
                     <label className="block text-sm font-semibold text-foreground mb-1 uppercase tracking-wide">
                       YTD Sales ($)
                     </label>
-                    <input
-                      type="text"
-                      value={formatNumber(firm.ytdSales)}
-                      onChange={(e) => updateRepFirm(firm.id, 'ytdSales', parseNumber(e.target.value))}
+                    <CurrencyInput
+                      value={firm.ytdSales}
+                      onChange={(val) => updateRepFirm(firm.id, 'ytdSales', val)}
                       className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
                     />
                   </div>
@@ -255,8 +257,13 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
                     </label>
                     <input
                       type="number"
-                      value={firm.percentToGoal}
-                      onChange={(e) => updateRepFirm(firm.id, 'percentToGoal', parseFloat(e.target.value) || 0)}
+                      step="0.1"
+                      value={firm.percentToGoal || ''}
+                      onChange={(e) => {
+                        const val = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                        updateRepFirm(firm.id, 'percentToGoal', isNaN(val) ? 0 : val)
+                      }}
+                      placeholder="0"
                       className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
                     />
                   </div>
@@ -267,8 +274,13 @@ export default function SalesDataTab({ data, updateData, channelConfig }: Props)
                     </label>
                     <input
                       type="number"
-                      value={firm.yoyGrowth}
-                      onChange={(e) => updateRepFirm(firm.id, 'yoyGrowth', parseFloat(e.target.value) || 0)}
+                      step="0.1"
+                      value={firm.yoyGrowth || ''}
+                      onChange={(e) => {
+                        const val = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                        updateRepFirm(firm.id, 'yoyGrowth', isNaN(val) ? 0 : val)
+                      }}
+                      placeholder="0"
                       className="w-full px-4 py-3 border-2 border-card-border rounded-lg bg-input-bg text-foreground focus:ring-2 focus:ring-sonance-blue focus:border-sonance-blue"
                     />
                   </div>
