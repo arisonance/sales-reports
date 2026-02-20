@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, use, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useMemo } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 
 // Tab components
@@ -98,11 +98,27 @@ interface EditHistory {
   edit_reason: string | null
 }
 
-export default function AdminEditReport({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+interface ChannelConfig {
+  channel_types: string[]
+  uses_direct_customers: boolean
+  entities: Array<{ id: string; name: string; entity_type: string }>
+  customers: Array<{ id: string; name: string }>
+}
+
+const initialChannelConfig: ChannelConfig = {
+  channel_types: [],
+  uses_direct_customers: false,
+  entities: [],
+  customers: [],
+}
+
+export default function AdminEditReport() {
+  const params = useParams<{ id: string }>()
+  const reportId = Array.isArray(params.id) ? params.id[0] : params.id
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('basic')
   const [reportData, setReportData] = useState<ReportData>(initialReportData)
+  const [channelConfig, setChannelConfig] = useState<ChannelConfig>(initialChannelConfig)
   const [editReason, setEditReason] = useState('')
   const [editHistory, setEditHistory] = useState<EditHistory[]>([])
   const [loading, setLoading] = useState(true)
@@ -123,10 +139,16 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
       return
     }
 
-    loadReportData()
-  }, [router, id])
+    if (!reportId) {
+      setError('Invalid report ID')
+      setLoading(false)
+      return
+    }
 
-  const loadReportData = async () => {
+    loadReportData(reportId)
+  }, [router, reportId])
+
+  const loadReportData = async (id: string) => {
     try {
       const res = await fetch(`/api/admin/reports/${id}`)
       if (!res.ok) {
@@ -139,6 +161,18 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
       }
 
       const data = await res.json()
+      const mappedRepFirms = data.repFirms?.length > 0
+        ? data.repFirms.map((r: { id: string; name: string; monthly_sales: number; ytd_sales: number; percent_to_goal: number; yoy_growth: number; entity_type?: string }) => ({
+            id: r.id,
+            name: r.name,
+            monthlySales: r.monthly_sales || 0,
+            ytdSales: r.ytd_sales || 0,
+            percentToGoal: r.percent_to_goal || 0,
+            yoyGrowth: r.yoy_growth || 0,
+            entityType: r.entity_type || 'rep_firm',
+          }))
+        : [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0, entityType: 'rep_firm' }]
+      const reportHasSalesRows = Array.isArray(data.repFirms) && data.repFirms.length > 0
 
       setReportData({
         directorId: data.directors?.id || '',
@@ -161,17 +195,7 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
         ytdGoal: data.regionalPerformance?.ytd_goal || 0,
         openOrders: data.regionalPerformance?.open_orders || 0,
         pipeline: data.regionalPerformance?.pipeline || 0,
-        repFirms: data.repFirms?.length > 0
-          ? data.repFirms.map((r: { id: string; name: string; monthly_sales: number; ytd_sales: number; percent_to_goal: number; yoy_growth: number; entity_type?: string }) => ({
-              id: r.id,
-              name: r.name,
-              monthlySales: r.monthly_sales || 0,
-              ytdSales: r.ytd_sales || 0,
-              percentToGoal: r.percent_to_goal || 0,
-              yoyGrowth: r.yoy_growth || 0,
-              entityType: r.entity_type || 'rep_firm',
-            }))
-          : [{ id: '1', name: '', monthlySales: 0, ytdSales: 0, percentToGoal: 0, yoyGrowth: 0, entityType: 'rep_firm' }],
+        repFirms: mappedRepFirms,
         competitors: data.competitors?.length > 0
           ? data.competitors.map((c: { id: string; name: string; what_were_seeing: string; our_response: string }) => ({
               id: c.id,
@@ -198,6 +222,7 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
       })
 
       setEditHistory(data.editHistory || [])
+      setHasSalesChannels(reportHasSalesRows)
 
       // Fetch channel config to determine if Sales Data tab should be visible
       const directorId = data.directors?.id
@@ -206,7 +231,11 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
           const channelRes = await fetch(`/api/directors/${directorId}/channel-config`)
           if (channelRes.ok) {
             const config = await channelRes.json()
-            setHasSalesChannels(config.channel_types?.length > 0 || config.uses_direct_customers)
+            setChannelConfig(config)
+            setHasSalesChannels(
+              reportHasSalesRows ||
+              (config.channel_types?.length > 0 || config.uses_direct_customers)
+            )
           }
         } catch (err) {
           console.error('Failed to fetch channel config:', err)
@@ -225,6 +254,11 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
   }
 
   const handleSave = async () => {
+    if (!reportId) {
+      setError('Invalid report ID')
+      return
+    }
+
     setSaving(true)
 
     try {
@@ -257,7 +291,7 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
         editReason: editReason || null,
       }
 
-      const res = await fetch(`/api/admin/reports/${id}`, {
+      const res = await fetch(`/api/admin/reports/${reportId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -267,7 +301,7 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
 
       const result = await res.json()
       alert(`Report updated successfully! ${result.changesRecorded} change(s) recorded.`)
-      router.push(`/admin/report/${id}`)
+      router.push(`/admin/report/${reportId}`)
     } catch (err) {
       console.error('Failed to save report:', err)
       alert('Failed to save report. Please try again.')
@@ -290,7 +324,7 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
       case 'wins':
         return <WinsHighlightsTab data={reportData} updateData={updateReportData} />
       case 'sales':
-        return <SalesDataTab data={reportData} updateData={updateReportData} />
+        return <SalesDataTab data={reportData} updateData={updateReportData} channelConfig={channelConfig} />
       case 'competition':
         return <CompetitionTab data={reportData} updateData={updateReportData} />
       case 'initiatives':
@@ -329,7 +363,7 @@ export default function AdminEditReport({ params }: { params: Promise<{ id: stri
       <div className="bg-card-bg shadow">
         <div className="h-1 bg-gradient-to-r from-sonance-blue to-sonance-charcoal"></div>
         <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href={`/admin/report/${id}`} className="text-foreground opacity-60 hover:text-sonance-blue hover:opacity-100 transition-all uppercase tracking-wide text-sm">
+          <Link href={`/admin/report/${reportId}`} className="text-foreground opacity-60 hover:text-sonance-blue hover:opacity-100 transition-all uppercase tracking-wide text-sm">
             &larr; Cancel
           </Link>
           <div className="flex items-center gap-4">

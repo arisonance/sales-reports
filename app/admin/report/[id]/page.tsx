@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { pdf } from '@react-pdf/renderer'
 
 interface ReportData {
   id: string
@@ -47,10 +48,13 @@ interface ReportData {
 
 export default function ViewReport() {
   const router = useRouter()
-  const params = useParams()
+  const params = useParams<{ id: string }>()
+  const reportId = Array.isArray(params.id) ? params.id[0] : params.id
   const [report, setReport] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [exportingPdf, setExportingPdf] = useState(false)
+  const [downloadingPhotoId, setDownloadingPhotoId] = useState<string | null>(null)
 
   useEffect(() => {
     // Check admin auth
@@ -60,13 +64,19 @@ export default function ViewReport() {
       return
     }
 
-    // Fetch report
-    fetchReport()
-  }, [router, params.id])
+    if (!reportId) {
+      setError('Invalid report ID')
+      setLoading(false)
+      return
+    }
 
-  const fetchReport = async () => {
+    // Fetch report
+    fetchReport(reportId)
+  }, [router, reportId])
+
+  const fetchReport = async (id: string) => {
     try {
-      const res = await fetch(`/api/reports/${params.id}`)
+      const res = await fetch(`/api/reports/${id}`)
       if (!res.ok) {
         if (res.status === 404) {
           setError('Report not found')
@@ -163,6 +173,59 @@ export default function ViewReport() {
     })
   }
 
+  const toSlug = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExportPDF = async () => {
+    if (!report) return
+
+    setExportingPdf(true)
+    try {
+      const { SingleReportPDF } = await import('@/lib/pdf/report')
+      const blob = await pdf(<SingleReportPDF report={report} />).toBlob()
+      const month = report.month || new Date().toISOString().slice(0, 7)
+      const directorSlug = toSlug(report.directorName || 'director')
+      const filename = `sonance-report-${directorSlug}-${month}.pdf`
+      downloadBlob(blob, filename)
+    } catch (err) {
+      console.error('Failed to export report PDF:', err)
+      alert('Failed to export PDF. Please try again.')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
+  const handleDownloadPhoto = async (photo: { id: string; filename: string; url: string }) => {
+    setDownloadingPhotoId(photo.id)
+    try {
+      const response = await fetch(photo.url)
+      if (!response.ok) throw new Error(`Photo download failed with ${response.status}`)
+
+      const blob = await response.blob()
+      const fallbackName = `photo-${photo.id}.jpg`
+      downloadBlob(blob, photo.filename || fallbackName)
+    } catch (err) {
+      console.error('Failed to download photo directly, opening URL instead:', err)
+      window.open(photo.url, '_blank', 'noopener,noreferrer')
+    } finally {
+      setDownloadingPhotoId(current => (current === photo.id ? null : current))
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-page-bg flex items-center justify-center">
@@ -195,15 +258,25 @@ export default function ViewReport() {
               &larr; Back to Dashboard
             </Link>
           </div>
-          <Link
-              href={`/admin/report/${params.id}/edit`}
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/admin/report/${reportId}/edit`}
               className="px-4 py-2 border-2 border-sonance-blue text-sonance-blue rounded-lg hover:bg-sonance-blue hover:text-white transition-colors text-sm font-semibold uppercase tracking-wide"
             >
               Edit Report
             </Link>
-          <button className="px-4 py-2 bg-sonance-blue text-white rounded-lg hover:bg-sonance-blue/90 transition-colors text-sm font-semibold uppercase tracking-wide">
-            Export PDF
-          </button>
+            <button
+              onClick={handleExportPDF}
+              disabled={exportingPdf}
+              className={`px-4 py-2 rounded-lg transition-colors text-sm font-semibold uppercase tracking-wide ${
+                exportingPdf
+                  ? 'bg-muted text-foreground/50 cursor-not-allowed'
+                  : 'bg-sonance-blue text-white hover:bg-sonance-blue/90'
+              }`}
+            >
+              {exportingPdf ? 'Exporting...' : 'Export PDF'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -466,12 +539,26 @@ export default function ViewReport() {
             <h2 className="text-lg font-bold text-foreground mb-4 uppercase tracking-wide">Photos</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {report.photos.map((photo) => (
-                <div key={photo.id} className="aspect-video bg-muted rounded-lg overflow-hidden">
-                  <img
-                    src={photo.url}
-                    alt={photo.filename}
-                    className="w-full h-full object-cover"
-                  />
+                <div key={photo.id}>
+                  <div className="relative aspect-video bg-muted rounded-lg overflow-hidden group">
+                    <img
+                      src={photo.url}
+                      alt={photo.filename}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      onClick={() => handleDownloadPhoto(photo)}
+                      className={`absolute right-2 top-2 px-2 py-1 rounded text-xs font-semibold uppercase tracking-wide transition-opacity ${
+                        downloadingPhotoId === photo.id
+                          ? 'bg-muted text-foreground/60 cursor-not-allowed'
+                          : 'bg-black/70 text-white hover:bg-black/80 sm:opacity-0 sm:group-hover:opacity-100'
+                      }`}
+                      disabled={downloadingPhotoId === photo.id}
+                    >
+                      {downloadingPhotoId === photo.id ? '...' : 'Download'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-foreground opacity-60 mt-1 truncate">{photo.filename}</p>
                 </div>
               ))}
             </div>

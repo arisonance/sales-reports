@@ -21,13 +21,38 @@ const SECTION_LABELS: Record<string, { title: string; singular: string }> = {
 export default function SalesDataTab({ data, updateData, channelConfig }: Props) {
   // Determine which entity sections to show based on wizard config
   const activeSections = useMemo(() => {
-    const sections = [...(channelConfig?.channel_types || [])]
+    const configuredSections = [...(channelConfig?.channel_types || [])]
     if (channelConfig?.uses_direct_customers) {
-      sections.push('direct_customer')
+      configuredSections.push('direct_customer')
     }
-    // No channels configured: show all entity types for flexibility
-    return sections.length > 0 ? sections : ['rep_firm', 'distributor', 'specialty_account']
-  }, [channelConfig])
+
+    // Always include entity types already present in the loaded report data.
+    // This prevents existing rows from disappearing when channel config is missing/stale.
+    const reportSections = Array.from(
+      new Set(
+        data.repFirms
+          .map(firm => firm.entityType)
+          .filter(Boolean)
+      )
+    ) as string[]
+
+    const merged = Array.from(new Set([...configuredSections, ...reportSections]))
+
+    // Keep section order predictable for UX consistency.
+    const sectionOrder = ['rep_firm', 'distributor', 'specialty_account', 'direct_customer']
+    if (merged.length > 0) {
+      return merged.sort((a, b) => {
+        const aIndex = sectionOrder.indexOf(a)
+        const bIndex = sectionOrder.indexOf(b)
+        const safeA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex
+        const safeB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex
+        return safeA - safeB
+      })
+    }
+
+    // No channels configured and no existing report data: show core entity types for flexibility.
+    return ['rep_firm', 'distributor', 'specialty_account']
+  }, [channelConfig, data.repFirms])
 
   // Get dropdown options for a given entity type
   const getOptionsForType = (entityType: string) => {
